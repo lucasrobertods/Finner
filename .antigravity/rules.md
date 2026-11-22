@@ -24,3 +24,7 @@
 - **Build Verification:** Always run `./gradlew lintDebug` and `./gradlew testDebugUnitTest` after adding or modifying core logic.
 - **File Structure:** Keep feature modules modularized under `features/<feature_name>/` or organize by clean layers inside `app/src/main/java/com/yourpackage/`.
 - **Forbidden:** Do not introduce third-party logging libraries or unapproved dependencies without explicit confirmation.
+
+## 6. Documentation Maintenance (`README.md`)
+- **Always Keep `README.md` Up to Date:** Whenever a change adds, modifies, or removes user-facing features, domain rules/calculations, UI theme/design tokens, database schema/migrations, architecture structure, dependencies, or security/dev tooling, update `README.md` in the same task before finishing.
+- **Accuracy Check:** Ensure feature names, currency/budget rules, file trees, library versions, and setup/security instructions in `README.md` match the actual codebase (never leave stale labels or removed workflows documented).
