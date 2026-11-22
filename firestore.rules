@@ -1,0 +1,579 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: /households/{householdId}
+// Document ID: {householdId} (string, 1..128 chars)
+// Fields:
+//   - name: string (required, 1..100 chars) - Household display name
+//   - ownerUid: string (required, 1..128 chars, immutable) - Firebase Auth UID of the household creator/owner
+//   - memberUids: list<string> (required, 1..10 items, each 1..128 chars, must include ownerUid) - Authorized household member UIDs
+//   - updatedAtEpochMillis: int (required, >= 0) - Last modification timestamp in epoch milliseconds
+//
+// Subcollection: /households/{householdId}/categories/{categoryId}
+// Document ID: {categoryId} (must match data.id)
+// Fields:
+//   - id: string (required, 1..128 chars, immutable) - Unique category identifier
+//   - seriesId: string (optional, 1..128 chars) - Recurring category series identifier across months
+//   - year: int (optional, 2000..2100) - Target budget year
+//   - month: int (optional, 1..12) - Target budget month (1 = Jan .. 12 = Dec)
+//   - name: string (required, 1..100 chars) - Category display name
+//   - type: string (required, enum: ['INCOME', 'EXPENSE_LOCAL', 'EXPENSE_BRAZIL']) - Category flow type
+//   - envelopeName: string or null (optional/nullable, 1..100 chars if string) - Custom user-defined budget bucket name (null for INCOME)
+//   - envelopeType: string or null (optional/nullable, 1..100 chars if string) - Legacy/fallback budget bucket classification
+//   - plannedAmountCents: int (required, 0..100000000000) - Monthly planned budget in minor currency units
+//   - plannedPercentage: number or null (optional/nullable, 0..1000 if number) - Optional percentage of planned monthly inflows
+//   - currency: string (required, enum: ['EUR', 'BRL']) - Currency code
+//   - iconKey: string (required, 1..64 chars) - UI icon identifier
+//   - colorHex: int (required) - ARGB color integer
+//   - sortOrder: int (required, 0..10000) - Display ordering index
+//   - updatedAtEpochMillis: int (required, >= 0) - Last modification timestamp in epoch milliseconds
+//   - isDeleted: bool (required) - Soft-delete tombstone flag
+//
+// Subcollection: /households/{householdId}/budget_buckets/{bucketId}
+// Document ID: {bucketId} (string, 1..128 chars)
+// Fields:
+//   - bucketName: string (required, 1..100 chars) - Custom budget bucket display name
+//   - sortOrder: int (required, 0..10000) - Display ordering index
+//   - updatedAtEpochMillis: int (required, >= 0) - Last modification timestamp in epoch milliseconds
+//   - isDeleted: bool (required) - Soft-delete tombstone flag
+//
+// Subcollection: /households/{householdId}/transactions/{transactionId}
+// Document ID: {transactionId} (must match data.id)
+// Fields:
+//   - id: string (required, 1..128 chars, immutable) - Unique transaction identifier
+//   - description: string (required, 1..250 chars) - Expense or income description
+//   - amountCents: int (required, > 0, <= 100000000000) - Transaction amount in minor units (cents/centavos)
+//   - currency: string (required, enum: ['EUR', 'BRL']) - Transaction currency
+//   - date: string (required, YYYY-MM-DD format) - ISO-8601 local date string
+//   - year: int (required, 2000..2100) - Ledger year
+//   - month: int (required, 1..12) - Ledger month (1 = Jan .. 12 = Dec)
+//   - categoryId: string or null (optional/nullable, 1..128 chars if string) - Associated category ID
+//   - type: string (required, enum: ['INCOME', 'EXPENSE_LOCAL', 'EXPENSE_BRAZIL']) - Transaction classification
+//   - userId: string (required, 1..128 chars) - Household member identifier ("lucas", "iasmin", "joint", or UID)
+//   - userDisplayName: string (optional, 1..100 chars) - Denormalized member display name
+//   - isPaid: bool (required) - Settlement status flag
+//   - updatedAtEpochMillis: int (required, >= 0) - Last modification timestamp in epoch milliseconds
+//   - isDeleted: bool (required) - Soft-delete tombstone flag
+//
+// Subcollection: /households/{householdId}/installment_contracts/{contractId}
+// Document ID: {contractId} (must match data.id)
+// Fields:
+//   - id: string (required, 1..128 chars, immutable) - Unique installment contract identifier
+//   - description: string (required, 1..250 chars) - Contract description
+//   - monthlyAmountCents: int (required, > 0, <= 100000000000) - Single monthly installment in minor units
+//   - currency: string (required, enum: ['EUR', 'BRL']) - Contract currency
+//   - startYear: int (required, 2000..2100) - Anchor year for installment projection
+//   - startMonth: int (required, 1..12) - Anchor month (1..12) for installment projection
+//   - initialInstallmentNumber: int (required, 1..1200, <= totalInstallments) - Installment index at anchor month
+//   - totalInstallments: int (required, 1..1200) - Total installments in the contract
+//   - dayOfMonth: int (required, 1..31) - Billing day of month
+//   - categoryId: string or null (optional/nullable, 1..128 chars if string) - Associated category ID
+//   - type: string (required, enum: ['EXPENSE_LOCAL', 'EXPENSE_BRAZIL']) - Expense classification
+//   - userId: string (required, 1..128 chars) - Responsible household member identifier
+//   - userDisplayName: string (optional, 1..100 chars) - Denormalized member display name
+//   - updatedAtEpochMillis: int (required, >= 0) - Last modification timestamp in epoch milliseconds
+//   - isDeleted: bool (required) - Soft-delete tombstone flag
+//
+// Subcollection: /households/{householdId}/exchange_rates/{rateId}
+// Document ID: {rateId} (string, e.g. "2026_01")
+// Fields:
+//   - year: int (required, 2000..2100, immutable) - Rate target year
+//   - month: int (required, 1..12, immutable) - Rate target month
+//   - eurToBrlRate: number (required, int or float, > 0, <= 1000) - Conversion rate (1 EUR = X BRL)
+//   - lastUpdatedDate: string (required, YYYY-MM-DD format) - ISO-8601 local date of rate update
+//   - updatedByUserId: string (required, 1..128 chars) - Member identifier who updated the rate
+//   - updatedAtEpochMillis: int (required, >= 0) - Last modification timestamp in epoch milliseconds
+//
+// Subcollection: /households/{householdId}/goals/{goalId}
+// Document ID: {goalId} (must match data.id)
+// Fields:
+//   - id: string (required, 1..128 chars, immutable) - Unique goal identifier
+//   - title: string (required, 1..150 chars) - Savings goal title
+//   - targetAmountCents: int (required, > 0, <= 100000000000) - Target goal amount in minor units
+//   - currentSavedCents: int (required, >= 0, <= 100000000000) - Currently accumulated amount in minor units
+//   - currency: string (required, enum: ['EUR', 'BRL']) - Goal currency
+//   - targetDate: string or null (optional/nullable, YYYY-MM-DD format if string) - Target completion date
+//   - notes: string (required, 0..1000 chars) - Optional notes/description string
+//   - priority: string (required, enum: ['LONG_TERM', 'MEDIUM_TERM', 'SHORT_TERM']) - Priority tier
+//   - bucketName: string or null (optional/nullable, 1..100 chars if string) - Associated budget bucket name
+//   - updatedAtEpochMillis: int (required, >= 0) - Last modification timestamp in epoch milliseconds
+//   - isDeleted: bool (required) - Soft-delete tombstone flag
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the resource (for user-owned documents)
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if user is owner based on document's ownerUid field
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.ownerUid;
+    }
+
+    // Verify UID hasn't been tampered with on create
+    function uidUnchanged() {
+      return !('ownerUid' in request.resource.data) ||
+        request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Ensure ownerUid field is not modified on update
+    function uidNotModified() {
+      return !('ownerUid' in request.resource.data) ||
+        request.resource.data.ownerUid == resource.data.ownerUid;
+    }
+
+    // Validate required fields exist
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate that the document contains only the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate that immutable fields have not been modified during update
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Validate string length on request.resource.data
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate optional string (if present, must be string and within length bounds)
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+        (request.resource.data[field] is string &&
+         request.resource.data[field].size() >= minLen &&
+         request.resource.data[field].size() <= maxLen);
+    }
+
+    // Validate nullable/optional string (if present and non-null, must be string within length bounds)
+    function isValidNullableString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (request.resource.data[field] is string &&
+         request.resource.data[field].size() >= minLen &&
+         request.resource.data[field].size() <= maxLen);
+    }
+
+    // Validate optional int (if present, must be int within minVal..maxVal)
+    function isValidOptionalInt(field, minVal, maxVal) {
+      return !(field in request.resource.data) ||
+        (request.resource.data[field] is int &&
+         request.resource.data[field] >= minVal &&
+         request.resource.data[field] <= maxVal);
+    }
+
+    // Validate nullable/optional number (if present and non-null, must be int or float within minVal..maxVal)
+    function isValidNullableNumber(field, minVal, maxVal) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        ((request.resource.data[field] is int || request.resource.data[field] is float) &&
+         request.resource.data[field] >= minVal &&
+         request.resource.data[field] <= maxVal);
+    }
+
+    // Validate ISO-8601 local date string (YYYY-MM-DD)
+    function isValidIsoLocalDate(dateStr) {
+      return dateStr is string &&
+        dateStr.size() == 10 &&
+        dateStr.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    // Validate nullable/optional ISO-8601 local date string (YYYY-MM-DD)
+    function isValidNullableIsoLocalDate(field) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        isValidIsoLocalDate(request.resource.data[field]);
+    }
+
+    // Validate a single element in a UID list at a given index (bounded 1..128 chars)
+    function isValidUidAtIndex(listData, index) {
+      return listData.size() <= index ||
+        (listData[index] is string &&
+         listData[index].size() >= 1 &&
+         listData[index].size() <= 128);
+    }
+
+    // Deep validation for memberUids list (1..10 string UIDs, each 1..128 chars)
+    function isValidMemberUids(uids) {
+      return uids is list &&
+        uids.size() >= 1 &&
+        uids.size() <= 10 &&
+        isValidUidAtIndex(uids, 0) &&
+        isValidUidAtIndex(uids, 1) &&
+        isValidUidAtIndex(uids, 2) &&
+        isValidUidAtIndex(uids, 3) &&
+        isValidUidAtIndex(uids, 4) &&
+        isValidUidAtIndex(uids, 5) &&
+        isValidUidAtIndex(uids, 6) &&
+        isValidUidAtIndex(uids, 7) &&
+        isValidUidAtIndex(uids, 8) &&
+        isValidUidAtIndex(uids, 9);
+    }
+
+    // Check if the authenticated user is a member of the parent household document
+    function isHouseholdMember(householdId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/households/$(householdId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/households/$(householdId)).data.memberUids;
+    }
+
+    // ===============================================================
+    // Domain Validators (Called on BOTH create and update)
+    // ===============================================================
+
+    function isValidHousehold(data) {
+      return hasOnlyAllowedFields(['name', 'ownerUid', 'memberUids', 'updatedAtEpochMillis']) &&
+        hasRequiredFields(['name', 'ownerUid', 'memberUids', 'updatedAtEpochMillis']) &&
+        validStringLength('name', 1, 100) &&
+        validStringLength('ownerUid', 1, 128) &&
+        isValidMemberUids(data.memberUids) &&
+        data.ownerUid in data.memberUids &&
+        data.updatedAtEpochMillis is int &&
+        data.updatedAtEpochMillis >= 0;
+    }
+
+    function isValidCategory(data, categoryId) {
+      return hasOnlyAllowedFields([
+          'id', 'seriesId', 'year', 'month', 'name', 'type',
+          'envelopeName', 'envelopeType', 'plannedAmountCents',
+          'plannedPercentage', 'currency', 'iconKey', 'colorHex',
+          'sortOrder', 'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        hasRequiredFields([
+          'id', 'name', 'type', 'plannedAmountCents',
+          'currency', 'iconKey', 'colorHex', 'sortOrder',
+          'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        data.id is string &&
+        data.id == categoryId &&
+        data.id.size() >= 1 &&
+        data.id.size() <= 128 &&
+        isValidOptionalString('seriesId', 1, 128) &&
+        isValidOptionalInt('year', 2000, 2100) &&
+        isValidOptionalInt('month', 1, 12) &&
+        validStringLength('name', 1, 100) &&
+        data.type is string &&
+        data.type in ['INCOME', 'EXPENSE_LOCAL', 'EXPENSE_BRAZIL'] &&
+        isValidNullableString('envelopeName', 1, 100) &&
+        isValidNullableString('envelopeType', 1, 100) &&
+        data.plannedAmountCents is int &&
+        data.plannedAmountCents >= 0 &&
+        data.plannedAmountCents <= 100000000000 &&
+        isValidNullableNumber('plannedPercentage', 0, 1000) &&
+        data.currency is string &&
+        data.currency in ['EUR', 'BRL'] &&
+        validStringLength('iconKey', 1, 64) &&
+        data.colorHex is int &&
+        data.sortOrder is int &&
+        data.sortOrder >= 0 &&
+        data.sortOrder <= 10000 &&
+        data.updatedAtEpochMillis is int &&
+        data.updatedAtEpochMillis >= 0 &&
+        data.isDeleted is bool;
+    }
+
+    function isValidBudgetBucket(data, bucketId) {
+      return hasOnlyAllowedFields([
+          'bucketName', 'sortOrder', 'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        hasRequiredFields([
+          'bucketName', 'sortOrder', 'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        bucketId is string &&
+        bucketId.size() >= 1 &&
+        bucketId.size() <= 128 &&
+        validStringLength('bucketName', 1, 100) &&
+        data.sortOrder is int &&
+        data.sortOrder >= 0 &&
+        data.sortOrder <= 10000 &&
+        data.updatedAtEpochMillis is int &&
+        data.updatedAtEpochMillis >= 0 &&
+        data.isDeleted is bool;
+    }
+
+    function isValidTransaction(data, transactionId) {
+      return hasOnlyAllowedFields([
+          'id', 'description', 'amountCents', 'currency', 'date',
+          'year', 'month', 'categoryId', 'type', 'userId',
+          'userDisplayName', 'isPaid', 'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        hasRequiredFields([
+          'id', 'description', 'amountCents', 'currency', 'date',
+          'year', 'month', 'type', 'userId', 'isPaid',
+          'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        data.id is string &&
+        data.id == transactionId &&
+        data.id.size() >= 1 &&
+        data.id.size() <= 128 &&
+        validStringLength('description', 1, 250) &&
+        data.amountCents is int &&
+        data.amountCents > 0 &&
+        data.amountCents <= 100000000000 &&
+        data.currency is string &&
+        data.currency in ['EUR', 'BRL'] &&
+        isValidIsoLocalDate(data.date) &&
+        data.year is int &&
+        data.year >= 2000 &&
+        data.year <= 2100 &&
+        data.month is int &&
+        data.month >= 1 &&
+        data.month <= 12 &&
+        isValidNullableString('categoryId', 1, 128) &&
+        data.type is string &&
+        data.type in ['INCOME', 'EXPENSE_LOCAL', 'EXPENSE_BRAZIL'] &&
+        validStringLength('userId', 1, 128) &&
+        isValidOptionalString('userDisplayName', 1, 100) &&
+        data.isPaid is bool &&
+        data.updatedAtEpochMillis is int &&
+        data.updatedAtEpochMillis >= 0 &&
+        data.isDeleted is bool;
+    }
+
+    function isValidInstallmentContract(data, contractId) {
+      return hasOnlyAllowedFields([
+          'id', 'description', 'monthlyAmountCents', 'currency',
+          'startYear', 'startMonth', 'initialInstallmentNumber',
+          'totalInstallments', 'dayOfMonth', 'categoryId', 'type',
+          'userId', 'userDisplayName', 'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        hasRequiredFields([
+          'id', 'description', 'monthlyAmountCents', 'currency',
+          'startYear', 'startMonth', 'initialInstallmentNumber',
+          'totalInstallments', 'dayOfMonth', 'type', 'userId',
+          'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        data.id is string &&
+        data.id == contractId &&
+        data.id.size() >= 1 &&
+        data.id.size() <= 128 &&
+        validStringLength('description', 1, 250) &&
+        data.monthlyAmountCents is int &&
+        data.monthlyAmountCents > 0 &&
+        data.monthlyAmountCents <= 100000000000 &&
+        data.currency is string &&
+        data.currency in ['EUR', 'BRL'] &&
+        data.startYear is int &&
+        data.startYear >= 2000 &&
+        data.startYear <= 2100 &&
+        data.startMonth is int &&
+        data.startMonth >= 1 &&
+        data.startMonth <= 12 &&
+        data.initialInstallmentNumber is int &&
+        data.initialInstallmentNumber >= 1 &&
+        data.initialInstallmentNumber <= 1200 &&
+        data.totalInstallments is int &&
+        data.totalInstallments >= 1 &&
+        data.totalInstallments <= 1200 &&
+        data.initialInstallmentNumber <= data.totalInstallments &&
+        data.dayOfMonth is int &&
+        data.dayOfMonth >= 1 &&
+        data.dayOfMonth <= 31 &&
+        isValidNullableString('categoryId', 1, 128) &&
+        data.type is string &&
+        data.type in ['EXPENSE_LOCAL', 'EXPENSE_BRAZIL'] &&
+        validStringLength('userId', 1, 128) &&
+        isValidOptionalString('userDisplayName', 1, 100) &&
+        data.updatedAtEpochMillis is int &&
+        data.updatedAtEpochMillis >= 0 &&
+        data.isDeleted is bool;
+    }
+
+    function isValidExchangeRate(data, rateId) {
+      return hasOnlyAllowedFields([
+          'year', 'month', 'eurToBrlRate',
+          'lastUpdatedDate', 'updatedByUserId', 'updatedAtEpochMillis'
+        ]) &&
+        hasRequiredFields([
+          'year', 'month', 'eurToBrlRate',
+          'lastUpdatedDate', 'updatedByUserId', 'updatedAtEpochMillis'
+        ]) &&
+        rateId is string &&
+        rateId.size() >= 1 &&
+        rateId.size() <= 32 &&
+        data.year is int &&
+        data.year >= 2000 &&
+        data.year <= 2100 &&
+        data.month is int &&
+        data.month >= 1 &&
+        data.month <= 12 &&
+        (data.eurToBrlRate is int || data.eurToBrlRate is float) &&
+        data.eurToBrlRate > 0 &&
+        data.eurToBrlRate <= 1000 &&
+        isValidIsoLocalDate(data.lastUpdatedDate) &&
+        validStringLength('updatedByUserId', 1, 128) &&
+        data.updatedAtEpochMillis is int &&
+        data.updatedAtEpochMillis >= 0;
+    }
+
+    function isValidGoal(data, goalId) {
+      return hasOnlyAllowedFields([
+          'id', 'title', 'targetAmountCents', 'currentSavedCents',
+          'currency', 'targetDate', 'notes', 'priority', 'bucketName',
+          'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        hasRequiredFields([
+          'id', 'title', 'targetAmountCents', 'currentSavedCents',
+          'currency', 'notes', 'priority', 'updatedAtEpochMillis', 'isDeleted'
+        ]) &&
+        data.id is string &&
+        data.id == goalId &&
+        data.id.size() >= 1 &&
+        data.id.size() <= 128 &&
+        validStringLength('title', 1, 150) &&
+        data.targetAmountCents is int &&
+        data.targetAmountCents > 0 &&
+        data.targetAmountCents <= 100000000000 &&
+        data.currentSavedCents is int &&
+        data.currentSavedCents >= 0 &&
+        data.currentSavedCents <= 100000000000 &&
+        data.currency is string &&
+        data.currency in ['EUR', 'BRL'] &&
+        isValidNullableIsoLocalDate('targetDate') &&
+        validStringLength('notes', 0, 1000) &&
+        data.priority is string &&
+        data.priority in ['LONG_TERM', 'MEDIUM_TERM', 'SHORT_TERM'] &&
+        isValidNullableString('bucketName', 1, 100) &&
+        data.updatedAtEpochMillis is int &&
+        data.updatedAtEpochMillis >= 0 &&
+        data.isDeleted is bool;
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    match /households/{householdId} {
+      // Read: only authenticated users listed in memberUids
+      allow read: if isAuthenticated() &&
+        request.auth.uid in resource.data.memberUids;
+
+      // Create: authenticated user must be the ownerUid and included in memberUids
+      allow create: if isAuthenticated() &&
+        householdId.size() >= 1 &&
+        householdId.size() <= 128 &&
+        uidUnchanged() &&
+        request.auth.uid == request.resource.data.ownerUid &&
+        request.auth.uid in request.resource.data.memberUids &&
+        isValidHousehold(request.resource.data);
+
+      // Update: existing member, ownerUid is immutable, owner remains in memberUids, and schema is valid
+      allow update: if isAuthenticated() &&
+        request.auth.uid in resource.data.memberUids &&
+        uidNotModified() &&
+        areImmutableFieldsUnchanged(['ownerUid']) &&
+        isValidHousehold(request.resource.data);
+
+      // Delete: only the household owner can delete the household document
+      allow delete: if isDocOwner();
+
+      // ---------------------------------------------------------------
+      // 1. Categories Subcollection
+      // ---------------------------------------------------------------
+      match /categories/{categoryId} {
+        allow read: if isHouseholdMember(householdId);
+        allow create: if isHouseholdMember(householdId) &&
+          isValidCategory(request.resource.data, categoryId);
+        allow update: if isHouseholdMember(householdId) &&
+          areImmutableFieldsUnchanged(['id']) &&
+          isValidCategory(request.resource.data, categoryId);
+        allow delete: if isHouseholdMember(householdId);
+      }
+
+      // ---------------------------------------------------------------
+      // 2. Transactions Subcollection
+      // ---------------------------------------------------------------
+      match /transactions/{transactionId} {
+        allow read: if isHouseholdMember(householdId);
+        allow create: if isHouseholdMember(householdId) &&
+          isValidTransaction(request.resource.data, transactionId);
+        allow update: if isHouseholdMember(householdId) &&
+          areImmutableFieldsUnchanged(['id']) &&
+          isValidTransaction(request.resource.data, transactionId);
+        allow delete: if isHouseholdMember(householdId);
+      }
+
+      // ---------------------------------------------------------------
+      // 3. Installment Contracts Subcollection
+      // ---------------------------------------------------------------
+      match /installment_contracts/{contractId} {
+        allow read: if isHouseholdMember(householdId);
+        allow create: if isHouseholdMember(householdId) &&
+          isValidInstallmentContract(request.resource.data, contractId);
+        allow update: if isHouseholdMember(householdId) &&
+          areImmutableFieldsUnchanged(['id']) &&
+          isValidInstallmentContract(request.resource.data, contractId);
+        allow delete: if isHouseholdMember(householdId);
+      }
+
+      // ---------------------------------------------------------------
+      // 4. Exchange Rates Subcollection
+      // ---------------------------------------------------------------
+      match /exchange_rates/{rateId} {
+        allow read: if isHouseholdMember(householdId);
+        allow create: if isHouseholdMember(householdId) &&
+          isValidExchangeRate(request.resource.data, rateId);
+        allow update: if isHouseholdMember(householdId) &&
+          areImmutableFieldsUnchanged(['year', 'month']) &&
+          isValidExchangeRate(request.resource.data, rateId);
+        allow delete: if isHouseholdMember(householdId);
+      }
+
+      // ---------------------------------------------------------------
+      // 5. Goals Subcollection
+      // ---------------------------------------------------------------
+      match /goals/{goalId} {
+        allow read: if isHouseholdMember(householdId);
+        allow create: if isHouseholdMember(householdId) &&
+          isValidGoal(request.resource.data, goalId);
+        allow update: if isHouseholdMember(householdId) &&
+          areImmutableFieldsUnchanged(['id']) &&
+          isValidGoal(request.resource.data, goalId);
+        allow delete: if isHouseholdMember(householdId);
+      }
+
+      // ---------------------------------------------------------------
+      // 6. Budget Buckets Subcollection
+      // ---------------------------------------------------------------
+      match /budget_buckets/{bucketId} {
+        allow read: if isHouseholdMember(householdId);
+        allow create: if isHouseholdMember(householdId) &&
+          isValidBudgetBucket(request.resource.data, bucketId);
+        allow update: if isHouseholdMember(householdId) &&
+          areImmutableFieldsUnchanged(['bucketName']) &&
+          isValidBudgetBucket(request.resource.data, bucketId);
+        allow delete: if isHouseholdMember(householdId);
+      }
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
