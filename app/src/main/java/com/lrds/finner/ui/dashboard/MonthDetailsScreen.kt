@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -46,11 +47,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -95,8 +98,13 @@ fun MonthDetailsScreen(
     onToggleInstallmentPaid: (ActiveInstallmentItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedType by remember(initialFilter) { mutableStateOf(initialFilter.initialType) }
-    var selectedBucket by remember(initialFilter) { mutableStateOf(initialFilter.initialBucket) }
+    var selectedType by rememberSaveable(data.year, data.month, initialFilter.initialType) {
+        mutableStateOf(initialFilter.initialType)
+    }
+    var selectedBucket by rememberSaveable(data.year, data.month, initialFilter.initialBucket) {
+        mutableStateOf(initialFilter.initialBucket)
+    }
+    val listState = rememberLazyListState()
 
     val isCurrentMonth = remember(data.year, data.month) {
         val now = LocalDate.now()
@@ -163,6 +171,7 @@ fun MonthDetailsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .testTag("screen_month_details")
     ) {
         // Sticky-style Revolut Detail Top Bar
         Row(
@@ -309,7 +318,10 @@ fun MonthDetailsScreen(
         }
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 36.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
