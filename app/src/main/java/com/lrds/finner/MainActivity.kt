@@ -5,8 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.lrds.finner.ui.dashboard.MonthlyDashboardScreen
 import com.lrds.finner.ui.dashboard.MonthlyDashboardViewModel
+import com.lrds.finner.ui.navigation.FinnerAppHost
 import com.lrds.finner.ui.theme.FinnerTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
                         authManager = appContainer.authManager
                     )
                 )
-                MonthlyDashboardScreen(viewModel = dashboardViewModel)
+                FinnerAppHost(viewModel = dashboardViewModel)
             }
         }
     }

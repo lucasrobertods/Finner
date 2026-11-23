@@ -31,23 +31,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,7 +64,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.navigation3.runtime.NavKey
+import com.lrds.finner.ui.navigation.FinnerRoute
+import com.lrds.finner.ui.navigation.TOP_LEVEL_DESTINATIONS
+import com.lrds.finner.ui.navigation.TopLevelDestination
 import com.lrds.finner.ui.theme.FinnerAlpha
 import com.lrds.finner.ui.theme.FinnerTheme
 import java.util.Locale
@@ -467,15 +468,8 @@ fun ExchangeRateChip(
 }
 
 // ---------------------------------------------------------------------------------------------
-// 4. Floating Auto-Hide Glass Bottom Navigation Dock
+// 4. Floating Auto-Hide Glass Bottom Navigation Dock (Navigation 3 backed)
 // ---------------------------------------------------------------------------------------------
-
-enum class FinnerDestination(val label: String, val icon: ImageVector) {
-    MESES("Months", Icons.Default.CalendarMonth),
-    OBJETIVOS("Goals", Icons.Default.TrackChanges),
-    HISTORICO("History", Icons.Default.History),
-    PERFIL("Profile", Icons.Default.Person),
-}
 
 @Stable
 class AutoHideBarState(private val thresholdPx: Float) {
@@ -503,8 +497,8 @@ fun rememberAutoHideBarState(thresholdPx: Float = 6f): AutoHideBarState =
 
 @Composable
 fun FloatingBottomNav(
-    selected: FinnerDestination,
-    onSelected: (FinnerDestination) -> Unit,
+    selectedRoute: NavKey,
+    onSelected: (FinnerRoute) -> Unit,
     visible: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -532,12 +526,14 @@ fun FloatingBottomNav(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                FinnerDestination.entries.forEach { destination ->
+                TOP_LEVEL_DESTINATIONS.forEach { destination ->
                     FloatingNavItem(
                         destination = destination,
-                        selected = destination == selected,
-                        onClick = { onSelected(destination) },
-                        modifier = Modifier.weight(1f),
+                        selected = destination.route == selectedRoute,
+                        onClick = { onSelected(destination.route) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("nav_tab_${destination.label.lowercase()}"),
                     )
                 }
             }
@@ -547,7 +543,7 @@ fun FloatingBottomNav(
 
 @Composable
 private fun FloatingNavItem(
-    destination: FinnerDestination,
+    destination: TopLevelDestination,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -591,30 +587,56 @@ private fun FloatingNavItem(
 }
 
 // ---------------------------------------------------------------------------------------------
-// 5. Scaffold with Ambient Revolut Top Aura + Floating Dock
+// 5. Ambient Revolut Top Aura Modifier & Edge-to-Edge Floating Dock Scaffold
 // ---------------------------------------------------------------------------------------------
 
 @Composable
+fun Modifier.finnerTopAura(enabled: Boolean = true): Modifier {
+    val colors = FinnerTheme.colors
+    val auraStart = colors.heroGradientStart
+    return this
+        .background(colors.background)
+        .then(
+            if (enabled) {
+                Modifier.background(
+                    brush = Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0.0f to auraStart.copy(alpha = FinnerAlpha.auraTop),
+                            0.28f to auraStart.copy(alpha = FinnerAlpha.auraMid),
+                            0.52f to Color.Transparent,
+                        ),
+                    ),
+                )
+            } else {
+                Modifier
+            },
+        )
+}
+
+@Composable
 fun FinnerFloatingScaffold(
-    topBar: @Composable () -> Unit,
-    selectedDestination: FinnerDestination,
-    onDestinationSelected: (FinnerDestination) -> Unit,
+    selectedTopLevelRoute: NavKey,
+    onDestinationSelected: (FinnerRoute) -> Unit,
+    showBottomBar: Boolean,
     fabLabel: String?,
     onFabClick: () -> Unit,
     modifier: Modifier = Modifier,
-    showBottomBar: Boolean = true,
-    showTopAura: Boolean = true,
+    barState: AutoHideBarState = rememberAutoHideBarState(),
     content: @Composable () -> Unit,
 ) {
-    val barState = rememberAutoHideBarState()
     val spacing = FinnerTheme.spacing
     val sizes = FinnerTheme.sizes
     val colors = FinnerTheme.colors
 
-    LaunchedEffect(selectedDestination, showBottomBar) { barState.show() }
+    LaunchedEffect(selectedTopLevelRoute, showBottomBar) {
+        if (showBottomBar) {
+            barState.show()
+        }
+    }
 
+    val effectiveBottomBarVisible = showBottomBar && barState.isVisible
     val fabBottomPadding by animateDpAsState(
-        targetValue = if (showBottomBar && barState.isVisible) {
+        targetValue = if (effectiveBottomBarVisible) {
             sizes.floatingNavSlotHeight + spacing.fabGap
         } else {
             spacing.screenHorizontal
@@ -622,68 +644,41 @@ fun FinnerFloatingScaffold(
         label = "fabBottomPadding",
     )
 
-    val auraStart = colors.heroGradientStart
-
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
-            .then(
-                if (showTopAura) {
-                    Modifier.background(
-                        brush = Brush.verticalGradient(
-                            colorStops = arrayOf(
-                                0.0f to auraStart.copy(alpha = FinnerAlpha.auraTop),
-                                0.28f to auraStart.copy(alpha = FinnerAlpha.auraMid),
-                                0.52f to Color.Transparent,
-                            ),
-                        ),
-                    )
-                } else {
-                    Modifier
-                },
-            ),
+            .nestedScroll(barState.connection),
     ) {
-        Scaffold(
+        content()
+
+        AnimatedVisibility(
+            visible = fabLabel != null,
+            enter = fadeIn(),
+            exit = fadeOut(),
             modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(barState.connection),
-            containerColor = Color.Transparent,
-            topBar = topBar,
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-            ) {
-                content()
-
-                if (fabLabel != null) {
-                    ExtendedFloatingActionButton(
-                        onClick = onFabClick,
-                        containerColor = colors.primary,
-                        contentColor = colors.onPrimary,
-                        icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                        text = { Text(fabLabel, style = FinnerTheme.typography.labelLargeBold) },
-                        shape = FinnerTheme.shapes.pill,
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .navigationBarsPadding()
-                            .padding(end = spacing.screenHorizontal, bottom = fabBottomPadding),
-                    )
-                }
-
-                if (showBottomBar) {
-                    FloatingBottomNav(
-                        selected = selectedDestination,
-                        onSelected = onDestinationSelected,
-                        visible = barState.isVisible,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = spacing.floatingNavBottomMargin),
-                    )
-                }
-            }
+                .align(Alignment.BottomEnd)
+                .navigationBarsPadding()
+                .padding(end = spacing.screenHorizontal, bottom = fabBottomPadding),
+        ) {
+            ExtendedFloatingActionButton(
+                onClick = onFabClick,
+                containerColor = colors.primary,
+                contentColor = colors.onPrimary,
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text(fabLabel.orEmpty(), style = FinnerTheme.typography.labelLargeBold) },
+                shape = FinnerTheme.shapes.pill,
+                modifier = Modifier.testTag("finner_fab"),
+            )
         }
+
+        FloatingBottomNav(
+            selectedRoute = selectedTopLevelRoute,
+            onSelected = onDestinationSelected,
+            visible = effectiveBottomBarVisible,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = spacing.floatingNavBottomMargin),
+        )
     }
 }

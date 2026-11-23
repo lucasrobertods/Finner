@@ -31,9 +31,9 @@
   - Short-, medium-, and long-term goals that can be linked to a budget bucket (e.g., `Reserve`), aggregating bucket balances and forecasting completion month/year.
 - **Household Cloud Sync & Authentication**:
   - Offline-first operation with optional real-time multi-device household sync powered by Firebase Authentication (Email/Password & Google Sign-In) and Cloud Firestore.
-- **Tokenized Finner Design System**:
-  - Revolut-inspired OLED dark and crisp neutral light themes aligned with the Stitch design system, exposed through `FinnerTheme` (`colors`, `spacing`, `sizes`, `radius`, `shapes`, `elevation`, `typography`, `numericStyles`), bundled **Plus Jakarta Sans** variable font with tabular numerals (`tnum, lnum`), and contrast-tuned bucket palettes. See [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) for the full token catalog and M2 Konsist/Detekt enforcement conventions.
-  - Floating auto-hiding pill bottom navigation dock and Material 3 `ModalBottomSheet` forms and delete confirmations.
+- **Tokenized Finner Design System & Jetpack Navigation 3**:
+  - Revolut-inspired OLED dark and crisp neutral light themes aligned with the Stitch design system, exposed through `FinnerTheme` (`colors`, `spacing`, `sizes`, `radius`, `shapes`, `elevation`, `typography`, `numericStyles`), bundled **Plus Jakarta Sans** variable font with tabular numerals (`tnum, lnum`), contrast-tuned bucket palettes, ambient top gradient aura, frosted glass auto-hiding floating bottom navigation dock, and dedicated `MonthDetailsScreen` drill-down. See [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) for the full token catalog and M2 Konsist/Detekt enforcement conventions.
+  - **Jetpack Navigation 3** (`androidx.navigation3`) multi-stack architecture with `@Serializable` type-safe `NavKey` routes (`Dashboard`, `MonthDetails(year, month, initialType, initialBucket)`, `Goals`, `History`, `Profile`), directional Shared-Axis/Fade-Through tab switches, horizontal slide + parallax drill-down transitions, native Predictive Back support, and independent per-tab scroll/state restoration across tab switches and configuration changes.
 
 ---
 
@@ -63,10 +63,14 @@ app/src/main/java/com/lrds/finner/
 │       └── ObserveMonthlyDashboardUseCase.kt
 └── ui/
     ├── dashboard/
-    │   ├── components/  # FinnerTopBar, MonthPillTabs, ExchangeRateChip, FinnerFloatingScaffold, FinnerSectionCard, bucketColorFor
+    │   ├── components/  # FinnerTopBar, MonthPillTabs, ExchangeRateChip, FinnerSectionCard, CircularQuickActionButton, FinnerFloatingScaffold, finnerTopAura, bucketColorFor, bucketIconFor
     │   ├── MonthDetailsScreen.kt
     │   ├── MonthlyDashboardScreen.kt
     │   └── MonthlyDashboardViewModel.kt
+    ├── goals/           # GoalsScreen
+    ├── history/         # HistoryScreen
+    ├── navigation/      # FinnerRoutes, NavigationState, Navigator, FinnerTransitions, FinnerAppHost (NavDisplay)
+    ├── profile/         # ProfileScreen
     ├── theme/           # Tokenized Design System: Color.kt, Spacing.kt, Size.kt, Shape.kt, Type.kt, Theme.kt, ThemePreview.kt
     └── transaction/     # ModalBottomSheets: QuickTransactionModal, CategoryDialog, GoalDialog, BucketDialog, ExchangeRateDialog, ConfirmDeleteBottomSheet, HouseholdSyncDialog
 ```
@@ -88,8 +92,9 @@ app/src/main/java/com/lrds/finner/
 | **Language** | **Kotlin** | `2.2.10` (Coroutines, `Flow`, `StateFlow`) |
 | **Build System** | **Android Gradle Plugin (AGP)** & **KSP** | AGP `9.4.1`, KSP `2.3.6`, Gradle Version Catalog (`libs.versions.toml`) |
 | **SDK Levels** | **Android SDK** | `minSdk = 26` (Android 8.0), `targetSdk = 37`, `compileSdk = 37` |
-| **UI Toolkit** | **Jetpack Compose** & **Material Design 3** | Compose BOM `2026.02.01`, `HorizontalPager`, `ModalBottomSheet`, `NestedScrollConnection`, bundled variable fonts (`Fraunces`, `Plus Jakarta Sans`) |
-| **Architecture & Lifecycle** | **AndroidX Lifecycle & ViewModel** | `2.8.7` (`lifecycle-viewmodel-compose`, `collectAsStateWithLifecycle`) |
+| **UI Toolkit** | **Jetpack Compose** & **Material Design 3** | Compose BOM `2026.02.01`, `activity-compose:1.10.1`, `HorizontalPager`, `ModalBottomSheet`, `NestedScrollConnection`, bundled variable fonts (`Plus Jakarta Sans`) |
+| **Navigation** | **Jetpack Navigation 3** & **Kotlinx Serialization** | `navigation3-runtime:1.0.1`, `navigation3-ui:1.0.1`, `lifecycle-viewmodel-navigation3:2.10.0`, `kotlinx-serialization-core:1.9.0` |
+| **Architecture & Lifecycle** | **AndroidX Lifecycle & ViewModel** | `2.10.0` (`lifecycle-viewmodel-compose`, `collectAsStateWithLifecycle`, `dropUnlessResumed`) |
 | **Local Persistence** | **Jetpack Room** | `2.7.0` (`room-runtime`, `room-ktx`, `room-compiler` via KSP) |
 | **Backend & Cloud Sync** | **Firebase (BOM `33.10.0`)** | **Cloud Firestore** (real-time household sync & `firestore.rules`) and **Firebase Authentication** |
 | **Identity & Sign-In** | **AndroidX Credentials & Google ID** | `androidx.credentials:1.5.0`, `credentials-play-services-auth`, `com.google.android.libraries.identity.googleid:1.1.1` |
