@@ -17,7 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -29,14 +28,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.lrds.finner.core.currency.CurrencyConverter
 import com.lrds.finner.data.local.entity.CurrencyCode
 import com.lrds.finner.data.local.entity.GoalEntity
 import com.lrds.finner.data.local.entity.GoalPriority
 import com.lrds.finner.ui.dashboard.components.bucketColorFor
+import com.lrds.finner.ui.theme.FinnerAlpha
+import com.lrds.finner.ui.theme.FinnerTheme
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -53,8 +52,8 @@ fun GoalDialog(
         currency: CurrencyCode,
         priority: GoalPriority,
         bucketName: String?,
-        notes: String
-    ) -> Unit
+        notes: String,
+    ) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val isEditing = existingGoal != null
@@ -66,7 +65,7 @@ fun GoalDialog(
                 String.format(Locale.US, "%.2f", existingGoal.targetAmountCents / 100.0)
             } else {
                 ""
-            }
+            },
         )
     }
     var currentSavedText by remember(existingGoal) {
@@ -75,7 +74,7 @@ fun GoalDialog(
                 String.format(Locale.US, "%.2f", existingGoal.currentSavedCents / 100.0)
             } else {
                 ""
-            }
+            },
         )
     }
     var selectedCurrency by remember(existingGoal) {
@@ -96,21 +95,29 @@ fun GoalDialog(
     var titleError by remember { mutableStateOf<String?>(null) }
     var targetError by remember { mutableStateOf<String?>(null) }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        containerColor = colors.surfaceContainerLow,
+        shape = shapes.bottomSheet,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = spacing.sheetHorizontal, vertical = spacing.sheetVertical),
+            verticalArrangement = Arrangement.spacedBy(spacing.md),
         ) {
             Text(
                 text = if (isEditing) "Edit Goal / Target" else "New Goal / Target",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                style = typography.titleLarge,
+                color = colors.onSurface,
             )
 
             OutlinedTextField(
@@ -123,12 +130,12 @@ fun GoalDialog(
                 isError = titleError != null,
                 supportingText = titleError?.let { err -> { Text(err) } },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
             ) {
                 OutlinedTextField(
                     value = targetText,
@@ -141,7 +148,7 @@ fun GoalDialog(
                     supportingText = targetError?.let { err -> { Text(err) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 OutlinedTextField(
                     value = currentSavedText,
@@ -149,32 +156,33 @@ fun GoalDialog(
                     label = { Text("Initial / Extra Saved (${selectedCurrency.symbol})") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                 CurrencyCode.entries.forEach { cur ->
                     FilterChip(
                         selected = selectedCurrency == cur,
                         onClick = { selectedCurrency = cur },
-                        label = { Text("${cur.code} ${cur.symbol}") }
+                        label = { Text("${cur.code} ${cur.symbol}") },
                     )
                 }
             }
 
             Text(
                 text = "Link to an Envelope / Bucket (calculates progress and completion date)",
-                style = MaterialTheme.typography.labelMedium
+                style = typography.labelMedium,
+                color = colors.onSurfaceVariant,
             )
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
+                verticalArrangement = Arrangement.spacedBy(spacing.xs),
             ) {
                 FilterChip(
                     selected = selectedBucket == null,
                     onClick = { selectedBucket = null },
-                    label = { Text("No Bucket") }
+                    label = { Text("No Bucket") },
                 )
 
                 val displayedBuckets = remember(availableBuckets, selectedBucket) {
@@ -195,32 +203,32 @@ fun GoalDialog(
                         label = {
                             Text(
                                 text = bucket,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                style = if (isSelected) typography.labelLargeBold else typography.labelLargeMedium,
                             )
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = bColor.copy(alpha = 0.22f),
+                            selectedContainerColor = bColor.copy(alpha = FinnerAlpha.selectedContainer),
                             selectedLabelColor = bColor,
-                            labelColor = bColor
+                            labelColor = bColor,
                         ),
                         border = BorderStroke(
-                            width = if (isSelected) 1.5.dp else 1.dp,
-                            color = if (isSelected) bColor else bColor.copy(alpha = 0.5f)
-                        )
+                            width = if (isSelected) sizes.borderSelected else sizes.borderThin,
+                            color = if (isSelected) bColor else bColor.copy(alpha = FinnerAlpha.unselectedBorder),
+                        ),
                     )
                 }
 
                 FilterChip(
                     selected = showNewBucketField,
                     onClick = { showNewBucketField = !showNewBucketField },
-                    label = { Text("+ New Bucket") }
+                    label = { Text("+ New Bucket") },
                 )
             }
 
             if (showNewBucketField) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                 ) {
                     OutlinedTextField(
                         value = newBucketText,
@@ -232,7 +240,7 @@ fun GoalDialog(
                         isError = newBucketError != null,
                         supportingText = newBucketError?.let { err -> { Text(err) } },
                         singleLine = true,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     Button(
                         onClick = {
@@ -247,7 +255,7 @@ fun GoalDialog(
                                 showNewBucketField = false
                             }
                         },
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = spacing.sm),
                     ) {
                         Text("Create")
                     }
@@ -256,17 +264,18 @@ fun GoalDialog(
 
             Text(
                 text = "Priority / Timeframe",
-                style = MaterialTheme.typography.labelMedium
+                style = typography.labelMedium,
+                color = colors.onSurfaceVariant,
             )
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
+                verticalArrangement = Arrangement.spacedBy(spacing.xs),
             ) {
                 GoalPriority.entries.forEach { priority ->
                     FilterChip(
                         selected = selectedPriority == priority,
                         onClick = { selectedPriority = priority },
-                        label = { Text(priority.label) }
+                        label = { Text(priority.label) },
                     )
                 }
             }
@@ -276,16 +285,16 @@ fun GoalDialog(
                 onValueChange = { notes = it },
                 label = { Text("Notes (optional)") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.md),
             ) {
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text("Cancel")
                 }
@@ -305,18 +314,18 @@ fun GoalDialog(
                                 selectedCurrency,
                                 selectedPriority,
                                 selectedBucket,
-                                notes.trim()
+                                notes.trim(),
                             )
                             onDismiss()
                         }
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text("Save")
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.sheetBottomPadding))
         }
     }
 }

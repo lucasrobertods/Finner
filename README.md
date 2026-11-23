@@ -31,9 +31,9 @@
   - Short-, medium-, and long-term goals that can be linked to a budget bucket (e.g., `Reserve`), aggregating bucket balances and forecasting completion month/year.
 - **Household Cloud Sync & Authentication**:
   - Offline-first operation with optional real-time multi-device household sync powered by Firebase Authentication (Email/Password & Google Sign-In) and Cloud Firestore.
-- **Editorial Material 3 Design System**:
-  - Custom *"Private Banking Editorial Ledger"* theme with light (warm alabaster paper) and dark (stepped obsidian slate) tonal surface hierarchies, restrained Deep Pine primary and Terracotta Brazil accents, bundled **Fraunces** + **Plus Jakarta Sans** variable fonts with tabular numerals (`tnum, lnum`), and role-based corner radii (`Shape.kt`).
-  - Floating auto-hiding pill bottom navigation bar paired with an anchored Extended FAB and Material 3 `ModalBottomSheet` forms and delete confirmations.
+- **Tokenized Finner Design System**:
+  - Revolut-inspired OLED dark and crisp neutral light themes aligned with the Stitch design system, exposed through `FinnerTheme` (`colors`, `spacing`, `sizes`, `radius`, `shapes`, `elevation`, `typography`, `numericStyles`), bundled **Plus Jakarta Sans** variable font with tabular numerals (`tnum, lnum`), and contrast-tuned bucket palettes. See [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) for the full token catalog and M2 Konsist/Detekt enforcement conventions.
+  - Floating auto-hiding pill bottom navigation dock and Material 3 `ModalBottomSheet` forms and delete confirmations.
 
 ---
 
@@ -63,10 +63,11 @@ app/src/main/java/com/lrds/finner/
 │       └── ObserveMonthlyDashboardUseCase.kt
 └── ui/
     ├── dashboard/
-    │   ├── components/  # FinnerTopBar, MonthPillTabs, ExchangeRateChip, FinnerFloatingScaffold, bucketColorFor
+    │   ├── components/  # FinnerTopBar, MonthPillTabs, ExchangeRateChip, FinnerFloatingScaffold, FinnerSectionCard, bucketColorFor
+    │   ├── MonthDetailsScreen.kt
     │   ├── MonthlyDashboardScreen.kt
     │   └── MonthlyDashboardViewModel.kt
-    ├── theme/           # Material 3 Color.kt, Type.kt, Shape.kt, Theme.kt (+ FinnerExtendedColors)
+    ├── theme/           # Tokenized Design System: Color.kt, Spacing.kt, Size.kt, Shape.kt, Type.kt, Theme.kt, ThemePreview.kt
     └── transaction/     # ModalBottomSheets: QuickTransactionModal, CategoryDialog, GoalDialog, BucketDialog, ExchangeRateDialog, ConfirmDeleteBottomSheet, HouseholdSyncDialog
 ```
 

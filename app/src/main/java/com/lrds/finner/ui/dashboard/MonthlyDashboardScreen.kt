@@ -21,8 +21,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -48,7 +46,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -66,9 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lrds.finner.core.currency.CurrencyConverter
 import com.lrds.finner.data.local.entity.CategoryEntity
@@ -90,7 +85,7 @@ import com.lrds.finner.ui.dashboard.components.FinnerTopBar
 import com.lrds.finner.ui.dashboard.components.MonthPillTabs
 import com.lrds.finner.ui.dashboard.components.bucketColorFor
 import com.lrds.finner.ui.dashboard.components.bucketIconFor
-import com.lrds.finner.ui.theme.FinnerNumericStyles
+import com.lrds.finner.ui.theme.FinnerAlpha
 import com.lrds.finner.ui.theme.FinnerTheme
 import com.lrds.finner.ui.transaction.BucketDialog
 import com.lrds.finner.ui.transaction.CategoryDialog
@@ -348,8 +343,8 @@ fun MonthlyDashboardScreen(
                             ) {
                                 Text(
                                     text = "Loading $pageMonthFullName...",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    style = FinnerTheme.typography.bodyMedium,
+                                    color = FinnerTheme.colors.onSurfaceVariant
                                 )
                             }
                         }
@@ -607,85 +602,89 @@ private fun MonthlySummaryHomePage(
     val brazilPlannedBrl = remember(brazilCategories) { brazilCategories.sumOf { it.previstoCents } }
     val brazilActualBrl = remember(brazilCategories) { brazilCategories.sumOf { it.realizadoCents } }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 124.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(
+            start = spacing.screenHorizontal,
+            end = spacing.screenHorizontal,
+            top = spacing.sm,
+            bottom = spacing.floatingNavBottomClearance,
+        ),
+        verticalArrangement = Arrangement.spacedBy(spacing.sectionGap),
     ) {
         // 1. Revolut Hero Balance + Circular Quick Actions
         item {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp, bottom = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(top = spacing.md, bottom = spacing.xs),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     text = "ACTUAL SPARE CASH · ${monthFullName.uppercase()}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.labelSmall,
+                    color = colors.onSurfaceVariant,
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(spacing.compactPillVertical))
                 Text(
                     text = CurrencyConverter.formatCents(data.faltaSobraEurCents, CurrencyCode.EUR),
-                    style = FinnerNumericStyles.heroAmount,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = FinnerTheme.numericStyles.heroAmount,
+                    color = colors.onSurface,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.sm))
 
                 // Planned Spare Cash Delta Pill
                 val plannedPositive = data.plannedSpareCashEurCents >= 0L
-                val plannedColor = if (plannedPositive) {
-                    FinnerTheme.extendedColors.inflow
-                } else {
-                    FinnerTheme.extendedColors.outflow
-                }
-                val plannedContainer = if (plannedPositive) {
-                    FinnerTheme.extendedColors.inflowContainer
-                } else {
-                    FinnerTheme.extendedColors.outflowContainer
-                }
+                val plannedColor = if (plannedPositive) colors.inflow else colors.outflow
+                val plannedContainer = if (plannedPositive) colors.inflowContainer else colors.outflowContainer
                 Surface(
-                    shape = CircleShape,
-                    color = plannedContainer
+                    shape = shapes.pill,
+                    color = plannedContainer,
                 ) {
                     Text(
                         text = "Planned ${CurrencyConverter.formatCents(data.plannedSpareCashEurCents, CurrencyCode.EUR)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        style = typography.labelMedium,
                         color = plannedColor,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+                        modifier = Modifier.padding(
+                            horizontal = spacing.compactPillHorizontal,
+                            vertical = spacing.xs,
+                        ),
                     )
                 }
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(spacing.xxl))
 
                 // Revolut Circular Quick-Action Row (Zero FAB Overlap!)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CircularQuickActionButton(
                         icon = Icons.Default.Add,
                         label = "Add",
                         onClick = onAddTransaction,
-                        emphasized = true
+                        emphasized = true,
                     )
                     CircularQuickActionButton(
                         icon = Icons.Default.CurrencyExchange,
                         label = "Rate",
-                        onClick = onEditExchangeRate
+                        onClick = onEditExchangeRate,
                     )
                     CircularQuickActionButton(
                         icon = Icons.Default.AccountBalanceWallet,
                         label = "Bucket",
-                        onClick = onAddBucket
+                        onClick = onAddBucket,
                     )
                     CircularQuickActionButton(
                         icon = Icons.Default.FormatListBulleted,
                         label = "Details",
-                        onClick = { onOpenDetails(MonthDetailsFilter()) }
+                        onClick = { onOpenDetails(MonthDetailsFilter()) },
                     )
                 }
             }
@@ -698,7 +697,7 @@ private fun MonthlySummaryHomePage(
                 onAddBucket = onAddBucket,
                 onBucketClick = { bucketName ->
                     onOpenDetails(MonthDetailsFilter(initialBucket = bucketName))
-                }
+                },
             )
         }
 
@@ -711,7 +710,7 @@ private fun MonthlySummaryHomePage(
                     onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_BRAZIL))
                 },
                 onTogglePaid = onToggleInstallmentPaid,
-                onEditInstallment = onEditInstallment
+                onEditInstallment = onEditInstallment,
             )
         }
 
@@ -721,24 +720,23 @@ private fun MonthlySummaryHomePage(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column {
                         Text(
                             text = "Categories Summary",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = typography.titleMediumBold,
+                            color = colors.onSurface,
                         )
                         Text(
                             text = "Planned vs Actual · Tap to view entries",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(spacing.md))
 
                 CategorySummaryRow(
                     title = "Inflows (€)",
@@ -746,13 +744,13 @@ private fun MonthlySummaryHomePage(
                     actualFormatted = CurrencyConverter.formatCents(incomeActualEur, CurrencyCode.EUR),
                     plannedFormatted = CurrencyConverter.formatCents(incomePlannedEur, CurrencyCode.EUR),
                     icon = Icons.Default.ArrowDownward,
-                    accentColor = FinnerTheme.extendedColors.inflow,
-                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.INCOME)) }
+                    accentColor = colors.inflow,
+                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.INCOME)) },
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 10.dp),
-                    color = FinnerTheme.extendedColors.cardBorder
+                    modifier = Modifier.padding(vertical = spacing.sm),
+                    color = colors.cardBorder,
                 )
 
                 CategorySummaryRow(
@@ -761,13 +759,13 @@ private fun MonthlySummaryHomePage(
                     actualFormatted = CurrencyConverter.formatCents(localActualEur, CurrencyCode.EUR),
                     plannedFormatted = CurrencyConverter.formatCents(localPlannedEur, CurrencyCode.EUR),
                     icon = Icons.Default.ArrowUpward,
-                    accentColor = FinnerTheme.extendedColors.outflow,
-                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_LOCAL)) }
+                    accentColor = colors.outflow,
+                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_LOCAL)) },
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 10.dp),
-                    color = FinnerTheme.extendedColors.cardBorder
+                    modifier = Modifier.padding(vertical = spacing.sm),
+                    color = colors.cardBorder,
                 )
 
                 CategorySummaryRow(
@@ -776,8 +774,8 @@ private fun MonthlySummaryHomePage(
                     actualFormatted = CurrencyConverter.formatCents(brazilActualBrl, CurrencyCode.BRL),
                     plannedFormatted = CurrencyConverter.formatCents(brazilPlannedBrl, CurrencyCode.BRL),
                     icon = Icons.Default.Public,
-                    accentColor = FinnerTheme.extendedColors.brazilAccent,
-                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_BRAZIL)) }
+                    accentColor = colors.brazilAccent,
+                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_BRAZIL)) },
                 )
             }
         }
@@ -788,96 +786,99 @@ private fun MonthlySummaryHomePage(
 private fun RevolutEnvelopeBucketsCard(
     envelopes: List<EnvelopeSummary>,
     onAddBucket: () -> Unit,
-    onBucketClick: (String) -> Unit
+    onBucketClick: (String) -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     FinnerSectionCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
                 Text(
                     text = "Budget Envelopes",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = typography.titleMediumBold,
+                    color = colors.onSurface,
                 )
                 Text(
                     text = "Actual vs Planned · Tap to inspect",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.bodySmall,
+                    color = colors.onSurfaceVariant,
                 )
             }
             Text(
                 text = "+ New",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
+                style = typography.labelLarge,
+                color = colors.primary,
                 modifier = Modifier
-                    .clip(CircleShape)
+                    .clip(shapes.pill)
                     .clickable(onClick = onAddBucket)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .padding(horizontal = spacing.sm, vertical = spacing.xs),
             )
         }
 
         if (envelopes.isEmpty()) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
             Text(
                 text = "No budget envelopes configured yet.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
         } else {
-            Spacer(modifier = Modifier.height(14.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Spacer(modifier = Modifier.height(spacing.md))
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.md)) {
                 envelopes.forEach { envelope ->
                     val badgeColor = bucketColorFor(envelope.bucketName)
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(shapes.rowItem)
                             .clickable { onBucketClick(envelope.bucketName) }
-                            .padding(vertical = 2.dp),
-                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                            .padding(vertical = spacing.xxs),
+                        verticalArrangement = Arrangement.spacedBy(spacing.sm),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.md),
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(badgeColor.copy(alpha = 0.18f)),
-                                contentAlignment = Alignment.Center
+                                    .size(sizes.iconBadgeSm)
+                                    .clip(shapes.pill)
+                                    .background(badgeColor.copy(alpha = FinnerAlpha.envelopeBadgeContainer)),
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     imageVector = bucketIconFor(envelope.bucketName),
                                     contentDescription = null,
                                     tint = badgeColor,
-                                    modifier = Modifier.size(17.dp)
+                                    modifier = Modifier.size(sizes.iconMd),
                                 )
                             }
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
                                 ) {
                                     Text(
                                         text = envelope.bucketName,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        style = typography.bodyMediumSemiBold,
+                                        color = colors.onSurface,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                     Text(
                                         text = envelope.formattedPercentage,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        style = typography.labelSmall,
+                                        color = colors.onSurfaceVariant,
                                     )
                                 }
                             }
@@ -885,18 +886,17 @@ private fun RevolutEnvelopeBucketsCard(
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
                                     text = CurrencyConverter.formatCents(envelope.actualEurCents, CurrencyCode.EUR),
-                                    style = FinnerNumericStyles.rowAmount,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    style = FinnerTheme.numericStyles.rowAmountBold,
+                                    color = colors.onSurface,
                                 )
                                 Text(
                                     text = "of ${CurrencyConverter.formatCents(envelope.plannedEurCents, CurrencyCode.EUR)}",
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = FinnerTheme.numericStyles.metaAmount,
                                     color = if (envelope.plannedEurCents < 0L) {
-                                        FinnerTheme.extendedColors.outflow
+                                        colors.outflow
                                     } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    }
+                                        colors.onSurfaceVariant
+                                    },
                                 )
                             }
                         }
@@ -905,10 +905,10 @@ private fun RevolutEnvelopeBucketsCard(
                             progress = { envelope.usageFraction },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(4.dp)
-                                .clip(CircleShape),
+                                .height(sizes.progressBarSm)
+                                .clip(shapes.pill),
                             color = badgeColor,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            trackColor = colors.surfaceContainerHighest,
                         )
                     }
                 }
@@ -923,34 +923,42 @@ private fun RevolutBrazilCommitmentsPreviewCard(
     isCurrentMonth: Boolean,
     onSeeAll: () -> Unit,
     onTogglePaid: (ActiveInstallmentItem) -> Unit,
-    onEditInstallment: (ActiveInstallmentItem) -> Unit
+    onEditInstallment: (ActiveInstallmentItem) -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     FinnerSectionCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
             ) {
                 Text(
                     text = "Brazil Commitments",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = typography.titleMediumBold,
+                    color = colors.onSurface,
                 )
                 if (installments.isNotEmpty()) {
                     Surface(
-                        shape = CircleShape,
-                        color = FinnerTheme.extendedColors.inflowContainer
+                        shape = shapes.pill,
+                        color = colors.inflowContainer,
                     ) {
                         Text(
                             text = "${installments.size} Active",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = FinnerTheme.extendedColors.inflow,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            style = typography.labelSmall,
+                            color = colors.inflow,
+                            modifier = Modifier.padding(
+                                horizontal = spacing.badgeHorizontal,
+                                vertical = spacing.xs,
+                            ),
                         )
                     }
                 }
@@ -958,113 +966,110 @@ private fun RevolutBrazilCommitmentsPreviewCard(
 
             Row(
                 modifier = Modifier
-                    .clip(CircleShape)
+                    .clip(shapes.pill)
                     .clickable(onClick = onSeeAll)
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = spacing.xs, vertical = spacing.xxs),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "See all",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.labelMedium,
+                    color = colors.onSurfaceVariant,
                 )
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(16.dp)
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(sizes.iconSm),
                 )
             }
         }
 
         if (installments.isEmpty()) {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
             Text(
                 text = "No active installment contracts scheduled for this month.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
         } else {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
             installments.take(3).forEachIndexed { idx, item ->
                 if (idx > 0) {
                     HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = FinnerTheme.extendedColors.cardBorder
+                        modifier = Modifier.padding(vertical = spacing.sm),
+                        color = colors.cardBorder,
                     )
                 }
                 val badge = item.projection.badgeText
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(shapes.rowItem)
                         .clickable { onEditInstallment(item) }
-                        .padding(vertical = 2.dp),
+                        .padding(vertical = spacing.xxs),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md),
                 ) {
                     IconButton(
                         onClick = { onTogglePaid(item) },
                         enabled = isCurrentMonth || item.isPaid,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(sizes.iconButtonMd),
                     ) {
                         Icon(
                             imageVector = if (item.isPaid) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                             contentDescription = if (item.isPaid) "Paid" else "Mark paid",
-                            tint = if (item.isPaid) {
-                                FinnerTheme.extendedColors.inflow
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                            modifier = Modifier.size(21.dp)
+                            tint = if (item.isPaid) colors.inflow else colors.onSurfaceVariant,
+                            modifier = Modifier.size(sizes.iconXl),
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
                         ) {
                             Text(
                                 text = item.projection.contract.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                style = typography.bodyMediumSemiBold,
+                                color = colors.onSurface,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false)
+                                modifier = Modifier.weight(1f, fill = false),
                             )
                             Surface(
-                                shape = CircleShape,
-                                color = FinnerTheme.extendedColors.brazilContainer
+                                shape = shapes.pill,
+                                color = colors.brazilContainer,
                             ) {
                                 Text(
                                     text = badge,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = FinnerTheme.extendedColors.brazilAccent,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    style = typography.labelSmall,
+                                    color = colors.brazilAccent,
+                                    modifier = Modifier.padding(
+                                        horizontal = spacing.badgeHorizontal,
+                                        vertical = spacing.badgeVertical,
+                                    ),
                                 )
                             }
                         }
                         Text(
                             text = item.categoryName.ifBlank { "Installment" },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = CurrencyConverter.formatCents(item.amountOriginalCents, item.currency),
-                            style = FinnerNumericStyles.rowAmount,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = FinnerTheme.numericStyles.rowAmountBold,
+                            color = colors.onSurface,
                         )
                         if (item.currency == CurrencyCode.BRL) {
                             Text(
                                 text = "≈ ${CurrencyConverter.formatCents(item.amountEurCents, CurrencyCode.EUR)}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = FinnerTheme.numericStyles.metaAmount,
+                                color = colors.onSurfaceVariant,
                             )
                         }
                     }
@@ -1082,65 +1087,69 @@ private fun CategorySummaryRow(
     plannedFormatted: String,
     icon: ImageVector,
     accentColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(shapes.rowItem)
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(vertical = spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(accentColor.copy(alpha = 0.16f)),
-            contentAlignment = Alignment.Center
+                .size(sizes.iconBadgeSm)
+                .clip(shapes.pill)
+                .background(accentColor.copy(alpha = FinnerAlpha.tintedContainer)),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = accentColor,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(sizes.iconMd),
             )
         }
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                style = typography.bodyMediumSemiBold,
+                color = colors.onSurface,
             )
             Text(
                 text = "$count ${if (count == 1) "category" else "categories"}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
         }
 
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = actualFormatted,
-                style = FinnerNumericStyles.rowAmount,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                style = FinnerTheme.numericStyles.rowAmountBold,
+                color = colors.onSurface,
             )
             Text(
                 text = "of $plannedFormatted",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = FinnerTheme.numericStyles.metaAmount,
+                color = colors.onSurfaceVariant,
             )
         }
 
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = "Open $title",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            tint = colors.onSurfaceVariant,
+            modifier = Modifier.size(sizes.iconLg),
         )
     }
 }
@@ -1187,53 +1196,65 @@ private fun GoalsSectionPage(
         0f
     }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 124.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        contentPadding = PaddingValues(
+            start = spacing.screenHorizontal,
+            end = spacing.screenHorizontal,
+            top = spacing.sm,
+            bottom = spacing.floatingNavBottomClearance,
+        ),
+        verticalArrangement = Arrangement.spacedBy(spacing.itemGap),
     ) {
         // Header + "+ New Goal" mint pill
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
                     Text(
                         text = "Financial Goals",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = typography.titleLarge,
+                        color = colors.onSurface,
                     )
                     Text(
                         text = "${goals.size} active ${if (goals.size == 1) "target" else "targets"} · ${(overallProgress * 100).toInt()}% completed",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = typography.bodySmall,
+                        color = colors.onSurfaceVariant,
                     )
                 }
 
                 Surface(
                     onClick = onAddGoal,
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary
+                    shape = shapes.pill,
+                    color = colors.primary,
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                        modifier = Modifier.padding(
+                            horizontal = spacing.pillHorizontal,
+                            vertical = spacing.pillVertical,
+                        ),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(spacing.xs),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(16.dp)
+                            tint = colors.onPrimary,
+                            modifier = Modifier.size(sizes.iconSm),
                         )
                         Text(
                             text = "New Goal",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
+                            style = typography.labelLargeBold,
+                            color = colors.onPrimary,
                         )
                     }
                 }
@@ -1247,53 +1268,54 @@ private fun GoalsSectionPage(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = "TOTAL SAVED PROGRESS",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = typography.labelSmall,
+                            color = colors.onSurfaceVariant,
                         )
                         Surface(
-                            shape = CircleShape,
-                            color = FinnerTheme.extendedColors.inflowContainer
+                            shape = shapes.pill,
+                            color = colors.inflowContainer,
                         ) {
                             Text(
                                 text = "${(overallProgress * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = FinnerTheme.extendedColors.inflow,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                style = typography.labelSmallBold,
+                                color = colors.inflow,
+                                modifier = Modifier.padding(
+                                    horizontal = spacing.badgeHorizontal,
+                                    vertical = spacing.xs,
+                                ),
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(spacing.compactPillVertical))
                     Row(
                         verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                     ) {
                         Text(
                             text = CurrencyConverter.formatCents(totalSavedEur, CurrencyCode.EUR),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = FinnerTheme.numericStyles.sectionAmount,
+                            color = colors.onSurface,
                         )
                         Text(
                             text = "/ ${CurrencyConverter.formatCents(totalTargetEur, CurrencyCode.EUR)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 2.dp)
+                            style = typography.bodyMedium,
+                            color = colors.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = spacing.xxs),
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(spacing.md))
                     LinearProgressIndicator(
                         progress = { overallProgress },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(CircleShape),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            .height(sizes.progressBarMd)
+                            .clip(shapes.pill),
+                        color = colors.primary,
+                        trackColor = colors.surfaceContainerHighest,
                     )
                 }
             }
@@ -1302,17 +1324,16 @@ private fun GoalsSectionPage(
         if (goals.isEmpty()) {
             item {
                 FinnerSectionCard {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(spacing.compactPillVertical)) {
                         Text(
                             text = "No goals registered yet.",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = typography.titleSmallBold,
+                            color = colors.onSurface,
                         )
                         Text(
                             text = "Tap '+ New Goal' above to create financial targets and link them to a bucket for automatic pace forecasts.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
                         )
                     }
                 }
@@ -1322,7 +1343,7 @@ private fun GoalsSectionPage(
                 var menuExpanded by remember { mutableStateOf(false) }
                 val bucketName = goal.bucketName
                 val hasBucket = !bucketName.isNullOrBlank()
-                val bucketColor = if (hasBucket) bucketColorFor(bucketName) else MaterialTheme.colorScheme.primary
+                val bucketColor = if (hasBucket) bucketColorFor(bucketName) else colors.primary
 
                 val bucketYearlyActualEurCents = if (hasBucket) {
                     monthlyDataByMonth.values.sumOf { mData ->
@@ -1399,163 +1420,169 @@ private fun GoalsSectionPage(
                     else -> null
                 }
 
-                FinnerSectionCard(contentPadding = PaddingValues(16.dp)) {
+                FinnerSectionCard(contentPadding = PaddingValues(spacing.cardPadding)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(spacing.md),
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(bucketColor.copy(alpha = 0.16f)),
-                            contentAlignment = Alignment.Center
+                                .size(sizes.iconBadgeMd)
+                                .clip(shapes.pill)
+                                .background(bucketColor.copy(alpha = FinnerAlpha.tintedContainer)),
+                            contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = if (hasBucket) bucketIconFor(bucketName) else Icons.Default.Flag,
                                 contentDescription = null,
                                 tint = bucketColor,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(sizes.iconMd),
                             )
                         }
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = goal.title,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                style = typography.titleSmallBold,
+                                color = colors.onSurface,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
                             )
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
                             ) {
                                 if (hasBucket) {
                                     Text(
                                         text = bucketName!!,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = bucketColor
+                                        style = typography.labelSmall,
+                                        color = bucketColor,
                                     )
                                     Text(
                                         text = "·",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        style = typography.labelSmall,
+                                        color = colors.onSurfaceVariant,
                                     )
                                 }
                                 Text(
                                     text = goal.priority.label,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    style = typography.labelSmall,
+                                    color = colors.onSurfaceVariant,
                                 )
                             }
                         }
 
                         Surface(
                             onClick = { onIncrementGoal(goal) },
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            border = BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder)
+                            shape = shapes.pill,
+                            color = colors.surfaceContainerHigh,
+                            border = BorderStroke(sizes.borderThin, colors.cardBorder),
                         ) {
                             Text(
                                 text = "+100 ${goal.currency.symbol}",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                style = typography.labelSmall,
+                                color = colors.primary,
+                                modifier = Modifier.padding(
+                                    horizontal = spacing.compactPillHorizontal,
+                                    vertical = spacing.compactPillVertical,
+                                ),
                             )
                         }
 
                         Box {
                             IconButton(
                                 onClick = { menuExpanded = true },
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(sizes.iconButtonSm),
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.MoreHoriz,
                                     contentDescription = "Goal actions",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(18.dp)
+                                    tint = colors.onSurfaceVariant,
+                                    modifier = Modifier.size(sizes.iconMd),
                                 )
                             }
                             DropdownMenu(
                                 expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false }
+                                onDismissRequest = { menuExpanded = false },
                             ) {
                                 DropdownMenuItem(
-                                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(sizes.iconMd),
+                                        )
+                                    },
                                     text = { Text("Edit goal") },
                                     onClick = {
                                         menuExpanded = false
                                         onEditGoal(goal)
-                                    }
+                                    },
                                 )
                                 DropdownMenuItem(
                                     leadingIcon = {
                                         Icon(
                                             Icons.Default.DeleteOutline,
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.error,
-                                            modifier = Modifier.size(18.dp)
+                                            tint = colors.error,
+                                            modifier = Modifier.size(sizes.iconMd),
                                         )
                                     },
-                                    text = { Text("Delete goal", color = MaterialTheme.colorScheme.error) },
+                                    text = { Text("Delete goal", color = colors.error) },
                                     onClick = {
                                         menuExpanded = false
                                         onDeleteGoal(goal)
-                                    }
+                                    },
                                 )
                             }
                         }
                     }
 
                     if (goal.notes.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(spacing.compactPillVertical))
                         Text(
                             text = goal.notes,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(spacing.md))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = "${CurrencyConverter.formatCents(effectiveSavedCents, goal.currency)} / ${CurrencyConverter.formatCents(goal.targetAmountCents, goal.currency)}",
-                            style = FinnerNumericStyles.rowAmount,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = FinnerTheme.numericStyles.rowAmount,
+                            color = colors.onSurface,
                         )
                         Text(
                             text = "${(effectiveProgress * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = bucketColor
+                            style = typography.labelMediumBold,
+                            color = bucketColor,
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(spacing.compactPillVertical))
                     LinearProgressIndicator(
                         progress = { effectiveProgress },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(5.dp)
-                            .clip(CircleShape),
+                            .height(sizes.progressBarMd)
+                            .clip(shapes.pill),
                         color = bucketColor,
-                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        trackColor = colors.surfaceContainerHighest,
                     )
 
                     if (forecastText != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(spacing.sm))
                         Text(
                             text = forecastText,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = typography.labelSmall,
+                            color = colors.onSurfaceVariant,
                         )
                     }
                 }
@@ -1592,23 +1619,32 @@ private fun HistorySectionPage(
         filteredTransactions.groupBy { it.date }
     }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 124.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(
+            start = spacing.screenHorizontal,
+            end = spacing.screenHorizontal,
+            top = spacing.sm,
+            bottom = spacing.floatingNavBottomClearance,
+        ),
+        verticalArrangement = Arrangement.spacedBy(spacing.itemGap),
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
                 Text(
                     text = "History & Logs",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = typography.titleLarge,
+                    color = colors.onSurface,
                 )
                 Text(
                     text = "${filteredTransactions.size} ${if (filteredTransactions.size == 1) "transaction" else "transactions"} recorded",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.bodySmall,
+                    color = colors.onSurfaceVariant,
                 )
             }
         }
@@ -1621,58 +1657,58 @@ private fun HistorySectionPage(
                 placeholder = {
                     Text(
                         text = "Search description or member...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = typography.bodyMedium,
+                        color = colors.onSurfaceVariant,
                     )
                 },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = colors.onSurfaceVariant,
                     )
                 },
                 singleLine = true,
-                shape = CircleShape,
+                shape = shapes.pill,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = FinnerTheme.extendedColors.cardBorder
+                    focusedContainerColor = colors.surfaceContainer,
+                    unfocusedContainerColor = colors.surfaceContainer,
+                    focusedBorderColor = colors.primary,
+                    unfocusedBorderColor = colors.cardBorder,
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 
         // Type Filter Pills
         item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                 item {
                     HistoryFilterPill(
                         label = "All",
                         selected = selectedType == null,
-                        onClick = { selectedType = null }
+                        onClick = { selectedType = null },
                     )
                 }
                 item {
                     HistoryFilterPill(
                         label = "Inflows",
                         selected = selectedType == TransactionType.INCOME,
-                        onClick = { selectedType = TransactionType.INCOME }
+                        onClick = { selectedType = TransactionType.INCOME },
                     )
                 }
                 item {
                     HistoryFilterPill(
                         label = "Outflows",
                         selected = selectedType == TransactionType.EXPENSE_LOCAL,
-                        onClick = { selectedType = TransactionType.EXPENSE_LOCAL }
+                        onClick = { selectedType = TransactionType.EXPENSE_LOCAL },
                     )
                 }
                 item {
                     HistoryFilterPill(
                         label = "Brazil",
                         selected = selectedType == TransactionType.EXPENSE_BRAZIL,
-                        onClick = { selectedType = TransactionType.EXPENSE_BRAZIL }
+                        onClick = { selectedType = TransactionType.EXPENSE_BRAZIL },
                     )
                 }
             }
@@ -1687,8 +1723,8 @@ private fun HistorySectionPage(
                         } else {
                             "No transactions match your search or filter."
                         },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = typography.bodyMedium,
+                        color = colors.onSurfaceVariant,
                     )
                 }
             }
@@ -1697,24 +1733,29 @@ private fun HistorySectionPage(
                 item(key = "header_$date") {
                     Text(
                         text = date.toString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                        style = typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier.padding(top = spacing.xs, start = spacing.xs),
                     )
                 }
                 item(key = "group_$date") {
-                    FinnerSectionCard(contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
+                    FinnerSectionCard(
+                        contentPadding = PaddingValues(
+                            horizontal = spacing.cardPaddingCompactHorizontal,
+                            vertical = spacing.cardPaddingCompactVertical,
+                        ),
+                    ) {
                         dayTransactions.forEachIndexed { idx, tx ->
                             if (idx > 0) {
                                 HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 4.dp),
-                                    color = FinnerTheme.extendedColors.cardBorder
+                                    modifier = Modifier.padding(vertical = spacing.xs),
+                                    color = colors.cardBorder,
                                 )
                             }
                             HistoryTransactionRow(
                                 transaction = tx,
                                 onEdit = { onEditTransaction(tx) },
-                                onDelete = { onDeleteTransaction(tx) }
+                                onDelete = { onDeleteTransaction(tx) },
                             )
                         }
                     }
@@ -1728,28 +1769,28 @@ private fun HistorySectionPage(
 private fun HistoryFilterPill(
     label: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
     Surface(
         onClick = onClick,
-        shape = CircleShape,
-        color = if (selected) {
-            MaterialTheme.colorScheme.inverseSurface
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        },
-        border = if (selected) null else BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder)
+        shape = FinnerTheme.shapes.pill,
+        color = if (selected) colors.inverseSurface else colors.surfaceContainerHigh,
+        border = if (selected) null else BorderStroke(FinnerTheme.sizes.borderThin, colors.cardBorder),
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) {
-                MaterialTheme.colorScheme.inverseOnSurface
+            style = if (selected) {
+                FinnerTheme.typography.labelMediumBold
             } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
+                FinnerTheme.typography.labelMediumMedium
             },
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+            color = if (selected) colors.inverseOnSurface else colors.onSurfaceVariant,
+            modifier = Modifier.padding(
+                horizontal = spacing.pillHorizontal,
+                vertical = spacing.pillVertical,
+            ),
         )
     }
 }
@@ -1758,14 +1799,20 @@ private fun HistoryFilterPill(
 private fun HistoryTransactionRow(
     transaction: TransactionEntity,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     var menuExpanded by remember { mutableStateOf(false) }
     val isIncome = transaction.type == TransactionType.INCOME
     val accentColor = when (transaction.type) {
-        TransactionType.INCOME -> FinnerTheme.extendedColors.inflow
-        TransactionType.EXPENSE_BRAZIL -> FinnerTheme.extendedColors.brazilAccent
-        TransactionType.EXPENSE_LOCAL -> FinnerTheme.extendedColors.outflow
+        TransactionType.INCOME -> colors.inflow
+        TransactionType.EXPENSE_BRAZIL -> colors.brazilAccent
+        TransactionType.EXPENSE_LOCAL -> colors.outflow
     }
     val icon = when (transaction.type) {
         TransactionType.INCOME -> Icons.Default.ArrowDownward
@@ -1776,90 +1823,94 @@ private fun HistoryTransactionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(shapes.rowItem)
             .clickable(onClick = onEdit)
-            .padding(vertical = 8.dp),
+            .padding(vertical = spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(accentColor.copy(alpha = 0.16f)),
-            contentAlignment = Alignment.Center
+                .size(sizes.iconBadgeSm)
+                .clip(shapes.pill)
+                .background(accentColor.copy(alpha = FinnerAlpha.tintedContainer)),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = accentColor,
-                modifier = Modifier.size(17.dp)
+                modifier = Modifier.size(sizes.iconMd),
             )
         }
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = transaction.description,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = typography.bodyMediumSemiBold,
+                color = colors.onSurface,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = "${transaction.type.label} · ${transaction.userDisplayName.ifBlank { "Shared" }}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
 
         Text(
             text = (if (isIncome) "+ " else "- ") + CurrencyConverter.formatCents(transaction.amountCents, transaction.currency),
-            style = FinnerNumericStyles.rowAmount,
-            fontWeight = FontWeight.Bold,
-            color = if (isIncome) FinnerTheme.extendedColors.inflow else MaterialTheme.colorScheme.onSurface
+            style = FinnerTheme.numericStyles.rowAmountBold,
+            color = if (isIncome) colors.inflow else colors.onSurface,
         )
 
         Box {
             IconButton(
                 onClick = { menuExpanded = true },
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(sizes.iconButtonSm),
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreHoriz,
                     contentDescription = "Entry actions",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(sizes.iconMd),
                 )
             }
             DropdownMenu(
                 expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false }
+                onDismissRequest = { menuExpanded = false },
             ) {
                 DropdownMenuItem(
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(sizes.iconMd),
+                        )
+                    },
                     text = { Text("Edit entry") },
                     onClick = {
                         menuExpanded = false
                         onEdit()
-                    }
+                    },
                 )
                 DropdownMenuItem(
                     leadingIcon = {
                         Icon(
                             Icons.Default.DeleteOutline,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(18.dp)
+                            tint = colors.error,
+                            modifier = Modifier.size(sizes.iconMd),
                         )
                     },
-                    text = { Text("Delete entry", color = MaterialTheme.colorScheme.error) },
+                    text = { Text("Delete entry", color = colors.error) },
                     onClick = {
                         menuExpanded = false
                         onDelete()
-                    }
+                    },
                 )
             }
         }
@@ -1892,23 +1943,33 @@ private fun ProfileSectionPage(
             .ifBlank { "F" }
     }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 124.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        contentPadding = PaddingValues(
+            start = spacing.screenHorizontal,
+            end = spacing.screenHorizontal,
+            top = spacing.sm,
+            bottom = spacing.floatingNavBottomClearance,
+        ),
+        verticalArrangement = Arrangement.spacedBy(spacing.itemGap),
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
                 Text(
                     text = "Profile & Settings",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = typography.titleLarge,
+                    color = colors.onSurface,
                 )
                 Text(
                     text = "Account & Household Workspace",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.bodySmall,
+                    color = colors.onSurfaceVariant,
                 )
             }
         }
@@ -1918,69 +1979,69 @@ private fun ProfileSectionPage(
             FinnerSectionCard {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md),
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(50.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
+                            .size(sizes.avatarLg)
+                            .clip(shapes.pill)
+                            .background(colors.primary.copy(alpha = FinnerAlpha.selectedContainer)),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = initials,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            style = typography.titleMediumBold,
+                            color = colors.primary,
                         )
                     }
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                        verticalArrangement = Arrangement.spacedBy(spacing.xs),
                     ) {
                         Text(
                             text = householdName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = typography.titleMediumBold,
+                            color = colors.onSurface,
                         )
                         Text(
                             text = userEmail ?: userDisplayName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     Surface(
-                        shape = CircleShape,
+                        shape = shapes.pill,
                         color = if (isCloudConnected) {
-                            FinnerTheme.extendedColors.inflowContainer
+                            colors.inflowContainer
                         } else {
-                            MaterialTheme.colorScheme.surfaceContainerHighest
-                        }
+                            colors.surfaceContainerHighest
+                        },
                     ) {
                         Text(
                             text = if (isCloudConnected) "Synced" else "Offline",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
+                            style = typography.labelSmallBold,
                             color = if (isCloudConnected) {
-                                FinnerTheme.extendedColors.inflow
+                                colors.inflow
                             } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
+                                colors.onSurfaceVariant
                             },
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(
+                                horizontal = spacing.compactPillHorizontal,
+                                vertical = spacing.xs,
+                            ),
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = FinnerTheme.extendedColors.cardBorder)
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(spacing.lg))
+                HorizontalDivider(color = colors.cardBorder)
+                Spacer(modifier = Modifier.height(spacing.md))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     ProfileStatItem(label = "CURRENCY", value = "EUR / BRL")
                     ProfileStatItem(label = "MEMBER", value = userDisplayName)
@@ -1993,9 +2054,9 @@ private fun ProfileSectionPage(
         item {
             Text(
                 text = "DATA & SYNC",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 4.dp)
+                style = typography.labelSmall,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(start = spacing.xs),
             )
         }
         item {
@@ -2003,41 +2064,40 @@ private fun ProfileSectionPage(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md),
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)),
-                        contentAlignment = Alignment.Center
+                            .size(sizes.iconBadgeMd)
+                            .clip(shapes.pill)
+                            .background(colors.primary.copy(alpha = FinnerAlpha.tintedContainer)),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = if (isCloudConnected) Icons.Default.CloudDone else Icons.Default.CloudOff,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            tint = colors.primary,
+                            modifier = Modifier.size(sizes.iconLg),
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = if (isCloudConnected) "Cloud Synchronization" else "Offline Mode",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = typography.titleSmall,
+                            color = colors.onSurface,
                         )
                         Text(
                             text = "Workspace: $householdId",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     Text(
                         text = "Manage",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
+                        style = typography.labelLarge,
+                        color = colors.primary,
                     )
                 }
             }
@@ -2047,23 +2107,23 @@ private fun ProfileSectionPage(
         item {
             Text(
                 text = "VIEW ENTRIES FROM",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 4.dp)
+                style = typography.labelSmall,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(start = spacing.xs),
             )
         }
         item {
             FinnerSectionCard {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing.md)) {
                     HistoryFilterPill(
                         label = "All Members",
                         selected = selectedUserFilter == null,
-                        onClick = { onUserFilterChange(null) }
+                        onClick = { onUserFilterChange(null) },
                     )
                     HistoryFilterPill(
                         label = userDisplayName,
                         selected = selectedUserFilter == currentUserId,
-                        onClick = { onUserFilterChange(currentUserId) }
+                        onClick = { onUserFilterChange(currentUserId) },
                     )
                 }
             }
@@ -2073,19 +2133,18 @@ private fun ProfileSectionPage(
 
 @Composable
 private fun ProfileStatItem(label: String, value: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FinnerTheme.spacing.xxs)) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = FinnerTheme.typography.labelSmall,
+            color = FinnerTheme.colors.onSurfaceVariant,
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
+            style = FinnerTheme.typography.bodySmallSemiBold,
+            color = FinnerTheme.colors.onSurface,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

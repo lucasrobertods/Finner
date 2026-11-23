@@ -27,8 +27,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
@@ -49,12 +47,12 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,38 +68,19 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import com.lrds.finner.ui.theme.FinnerAlpha
 import com.lrds.finner.ui.theme.FinnerTheme
 import java.util.Locale
 
 // ---------------------------------------------------------------------------------------------
-// Revolut-inspired circular badge palette for Budget Envelopes
+// Theme-aware semantic helpers for Budget Envelopes
 // ---------------------------------------------------------------------------------------------
-private val CustomBucketPalette = listOf(
-    Color(0xFFF97316), // Revo Orange (Trip / custom)
-    Color(0xFF06B6D4), // Cyan
-    Color(0xFFEC4899), // Pink
-    Color(0xFF6366F1), // Indigo
-    Color(0xFF14B8A6), // Teal
-    Color(0xFF84CC16)  // Lime
-)
 
-fun bucketColorFor(bucketName: String?): Color {
-    if (bucketName.isNullOrBlank()) return Color(0xFF64748B)
-    return when (bucketName.trim().lowercase()) {
-        "bills" -> Color(0xFF3B82F6)    // Revo Blue
-        "reserve" -> Color(0xFF00D09C)  // Stitch Mint
-        "joint" -> Color(0xFFA855F7)    // Revo Purple
-        "personal" -> Color(0xFFF59E0B) // Revo Amber
-        "trip" -> Color(0xFFF97316)     // Revo Orange
-        else -> {
-            val hash = kotlin.math.abs(bucketName.trim().lowercase().hashCode())
-            CustomBucketPalette[hash % CustomBucketPalette.size]
-        }
-    }
-}
+@Composable
+@ReadOnlyComposable
+fun bucketColorFor(bucketName: String?): Color =
+    FinnerTheme.colors.buckets.forName(bucketName)
 
 fun bucketIconFor(bucketName: String?): ImageVector {
     if (bucketName.isNullOrBlank()) return Icons.Default.AccountBalanceWallet
@@ -123,34 +102,34 @@ fun bucketIconFor(bucketName: String?): ImageVector {
 fun FinnerSectionCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    contentPadding: PaddingValues = PaddingValues(18.dp),
-    content: @Composable ColumnScope.() -> Unit
+    contentPadding: PaddingValues = PaddingValues(FinnerTheme.spacing.cardPadding),
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(22.dp)
-    val border = BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder)
+    val shape = FinnerTheme.shapes.sectionCard
+    val border = BorderStroke(FinnerTheme.sizes.borderThin, FinnerTheme.colors.cardBorder)
     if (onClick != null) {
         Surface(
             onClick = onClick,
             modifier = modifier.fillMaxWidth(),
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            border = border
+            color = FinnerTheme.colors.surfaceContainer,
+            border = border,
         ) {
             Column(
                 modifier = Modifier.padding(contentPadding),
-                content = content
+                content = content,
             )
         }
     } else {
         Surface(
             modifier = modifier.fillMaxWidth(),
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            border = border
+            color = FinnerTheme.colors.surfaceContainer,
+            border = border,
         ) {
             Column(
                 modifier = Modifier.padding(contentPadding),
-                content = content
+                content = content,
             )
         }
     }
@@ -162,47 +141,47 @@ fun CircularQuickActionButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    emphasized: Boolean = false
+    emphasized: Boolean = false,
 ) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(FinnerTheme.spacing.sm),
     ) {
         Surface(
             onClick = onClick,
-            shape = CircleShape,
+            shape = FinnerTheme.shapes.pill,
             color = if (emphasized) {
-                MaterialTheme.colorScheme.inverseSurface
+                FinnerTheme.colors.inverseSurface
             } else {
-                MaterialTheme.colorScheme.surfaceContainerHigh
+                FinnerTheme.colors.surfaceContainerHigh
             },
             border = if (emphasized) {
                 null
             } else {
-                BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder)
+                BorderStroke(FinnerTheme.sizes.borderThin, FinnerTheme.colors.cardBorder)
             },
-            modifier = Modifier.size(52.dp)
+            modifier = Modifier.size(FinnerTheme.sizes.quickActionButton),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = icon,
                     contentDescription = label,
                     tint = if (emphasized) {
-                        MaterialTheme.colorScheme.inverseOnSurface
+                        FinnerTheme.colors.inverseOnSurface
                     } else {
-                        MaterialTheme.colorScheme.onSurface
+                        FinnerTheme.colors.onSurface
                     },
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(FinnerTheme.sizes.iconXl),
                 )
             }
         }
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = FinnerTheme.typography.labelMedium,
+            color = FinnerTheme.colors.onSurfaceVariant,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -218,7 +197,7 @@ fun YearTitleSelector(
     onYearSelected: (Int) -> Unit,
     onAddNextYear: () -> Unit,
     onDeleteYear: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val sortedYears = remember(availableYears, selectedYear) {
@@ -229,29 +208,28 @@ fun YearTitleSelector(
     Box(modifier = modifier) {
         Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
+                .clip(FinnerTheme.shapes.rowItem)
                 .clickable { expanded = true }
-                .padding(vertical = 2.dp),
+                .padding(vertical = FinnerTheme.spacing.xxs),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
+            horizontalArrangement = Arrangement.spacedBy(FinnerTheme.spacing.xxs),
         ) {
             Text(
                 text = "Finner $selectedYear",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                style = FinnerTheme.typography.headlineMedium,
+                color = FinnerTheme.colors.onSurface,
             )
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
                 contentDescription = "Select year",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
+                tint = FinnerTheme.colors.onSurfaceVariant,
+                modifier = Modifier.size(FinnerTheme.sizes.iconXxl),
             )
         }
 
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
         ) {
             sortedYears.forEach { year ->
                 DropdownMenuItem(
@@ -259,16 +237,20 @@ fun YearTitleSelector(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
                                 text = year.toString(),
-                                fontWeight = if (year == selectedYear) FontWeight.Bold else FontWeight.Normal,
-                                color = if (year == selectedYear) {
-                                    MaterialTheme.colorScheme.primary
+                                style = if (year == selectedYear) {
+                                    FinnerTheme.typography.bodyMediumBold
                                 } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                }
+                                    FinnerTheme.typography.bodyMedium
+                                },
+                                color = if (year == selectedYear) {
+                                    FinnerTheme.colors.primary
+                                } else {
+                                    FinnerTheme.colors.onSurface
+                                },
                             )
                             if (sortedYears.size > 1) {
                                 IconButton(
@@ -276,13 +258,13 @@ fun YearTitleSelector(
                                         expanded = false
                                         onDeleteYear(year)
                                     },
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(FinnerTheme.sizes.iconButtonMd),
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.DeleteOutline,
                                         contentDescription = "Delete year $year",
-                                        tint = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.size(18.dp)
+                                        tint = FinnerTheme.colors.error,
+                                        modifier = Modifier.size(FinnerTheme.sizes.iconMd),
                                     )
                                 }
                             }
@@ -291,29 +273,29 @@ fun YearTitleSelector(
                     onClick = {
                         expanded = false
                         onYearSelected(year)
-                    }
+                    },
                 )
             }
-            HorizontalDivider()
+            HorizontalDivider(color = FinnerTheme.colors.cardBorder)
             DropdownMenuItem(
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = FinnerTheme.colors.primary,
                     )
                 },
                 text = {
                     Text(
                         text = "Add new ($nextYear)",
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        style = FinnerTheme.typography.bodyMediumSemiBold,
+                        color = FinnerTheme.colors.primary,
                     )
                 },
                 onClick = {
                     expanded = false
                     onAddNextYear()
-                }
+                },
             )
         }
     }
@@ -328,15 +310,18 @@ fun FinnerTopBar(
     onDeleteYear: (Int) -> Unit,
     subtitle: String,
     modifier: Modifier = Modifier,
-    trailingContent: (@Composable () -> Unit)? = null
+    trailingContent: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 10.dp),
+            .padding(
+                horizontal = FinnerTheme.spacing.topBarHorizontal,
+                vertical = FinnerTheme.spacing.topBarVertical,
+            ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             YearTitleSelector(
@@ -344,18 +329,18 @@ fun FinnerTopBar(
                 availableYears = availableYears,
                 onYearSelected = onYearSelected,
                 onAddNextYear = onAddNextYear,
-                onDeleteYear = onDeleteYear
+                onDeleteYear = onDeleteYear,
             )
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = FinnerTheme.typography.bodySmall,
+                color = FinnerTheme.colors.onSurfaceVariant,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
         if (trailingContent != null) {
-            Spacer(modifier = Modifier.size(8.dp))
+            Spacer(modifier = Modifier.size(FinnerTheme.spacing.sm))
             trailingContent()
         }
     }
@@ -370,7 +355,7 @@ fun MonthPillTabs(
     months: List<String>,
     selectedIndex: Int,
     onMonthSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(selectedIndex) {
@@ -380,14 +365,17 @@ fun MonthPillTabs(
     LazyRow(
         state = listState,
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PaddingValues(
+            horizontal = FinnerTheme.spacing.topBarHorizontal,
+            vertical = FinnerTheme.spacing.compactPillVertical,
+        ),
+        horizontalArrangement = Arrangement.spacedBy(FinnerTheme.spacing.sm),
     ) {
         itemsIndexed(months) { index, label ->
             MonthPill(
                 label = label,
                 selected = index == selectedIndex,
-                onClick = { onMonthSelected(index) }
+                onClick = { onMonthSelected(index) },
             )
         }
     }
@@ -397,34 +385,40 @@ fun MonthPillTabs(
 private fun MonthPill(label: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        shape = CircleShape,
+        shape = FinnerTheme.shapes.pill,
         color = if (selected) {
-            MaterialTheme.colorScheme.inverseSurface
+            FinnerTheme.colors.inverseSurface
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
+            FinnerTheme.colors.surfaceContainerHigh
         },
         border = if (selected) {
             null
         } else {
-            BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder)
+            BorderStroke(FinnerTheme.sizes.borderThin, FinnerTheme.colors.cardBorder)
         },
         modifier = Modifier
-            .heightIn(min = 38.dp)
-            .widthIn(min = 64.dp)
+            .heightIn(min = FinnerTheme.sizes.pillMinHeight)
+            .widthIn(min = FinnerTheme.sizes.monthPillMinWidth),
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(
+                horizontal = FinnerTheme.spacing.pillHorizontal,
+                vertical = FinnerTheme.spacing.pillVertical,
+            ),
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                color = if (selected) {
-                    MaterialTheme.colorScheme.inverseOnSurface
+                style = if (selected) {
+                    FinnerTheme.typography.labelLargeBold
                 } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                    FinnerTheme.typography.labelLargeMedium
+                },
+                color = if (selected) {
+                    FinnerTheme.colors.inverseOnSurface
+                } else {
+                    FinnerTheme.colors.onSurfaceVariant
+                },
             )
         }
     }
@@ -438,33 +432,35 @@ private fun MonthPill(label: String, selected: Boolean, onClick: () -> Unit) {
 fun ExchangeRateChip(
     rate: Double,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Surface(
         onClick = onClick,
         modifier = modifier,
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder)
+        shape = FinnerTheme.shapes.pill,
+        color = FinnerTheme.colors.surfaceContainerHigh,
+        border = BorderStroke(FinnerTheme.sizes.borderThin, FinnerTheme.colors.cardBorder),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            modifier = Modifier.padding(
+                horizontal = FinnerTheme.spacing.compactPillHorizontal,
+                vertical = FinnerTheme.spacing.compactPillVertical,
+            ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(FinnerTheme.spacing.compactPillVertical),
         ) {
             Text(
                 text = String.format(Locale.forLanguageTag("pt-BR"), "1 € = R$ %.2f", rate),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = FinnerTheme.typography.labelMedium,
+                color = FinnerTheme.colors.onSurface,
                 maxLines = 1,
-                softWrap = false
+                softWrap = false,
             )
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = "Edit exchange rate",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(13.dp)
+                tint = FinnerTheme.colors.onSurfaceVariant,
+                modifier = Modifier.size(FinnerTheme.sizes.iconXs),
             )
         }
     }
@@ -478,7 +474,7 @@ enum class FinnerDestination(val label: String, val icon: ImageVector) {
     MESES("Months", Icons.Default.CalendarMonth),
     OBJETIVOS("Goals", Icons.Default.TrackChanges),
     HISTORICO("History", Icons.Default.History),
-    PERFIL("Profile", Icons.Default.Person)
+    PERFIL("Profile", Icons.Default.Person),
 }
 
 @Stable
@@ -510,35 +506,38 @@ fun FloatingBottomNav(
     selected: FinnerDestination,
     onSelected: (FinnerDestination) -> Unit,
     visible: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
         visible = visible,
         modifier = modifier,
         enter = slideInVertically(initialOffsetY = { it * 2 }) + fadeIn(),
-        exit = slideOutVertically(targetOffsetY = { it * 2 }) + fadeOut()
+        exit = slideOutVertically(targetOffsetY = { it * 2 }) + fadeOut(),
     ) {
         Surface(
-            shape = RoundedCornerShape(32.dp),
-            color = FinnerTheme.extendedColors.navDockBackground,
-            border = BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder),
-            shadowElevation = 16.dp,
+            shape = FinnerTheme.shapes.navDock,
+            color = FinnerTheme.colors.navDockBackground,
+            border = BorderStroke(FinnerTheme.sizes.borderThin, FinnerTheme.colors.cardBorder),
+            shadowElevation = FinnerTheme.elevation.floatingDock,
             modifier = Modifier
                 .navigationBarsPadding()
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth()
+                .padding(horizontal = FinnerTheme.spacing.screenHorizontal)
+                .fillMaxWidth(),
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
+                modifier = Modifier.padding(
+                    horizontal = FinnerTheme.spacing.compactPillVertical,
+                    vertical = FinnerTheme.spacing.compactPillVertical,
+                ),
                 horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 FinnerDestination.entries.forEach { destination ->
                     FloatingNavItem(
                         destination = destination,
                         selected = destination == selected,
                         onClick = { onSelected(destination) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -551,38 +550,41 @@ private fun FloatingNavItem(
     destination: FinnerDestination,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    val activeBg = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+    val activeBg = FinnerTheme.colors.primary.copy(alpha = FinnerAlpha.tintedContainer)
     val contentColor = if (selected) {
-        MaterialTheme.colorScheme.primary
+        FinnerTheme.colors.primary
     } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
+        FinnerTheme.colors.onSurfaceVariant
     }
 
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(26.dp),
+        shape = FinnerTheme.shapes.navDockItem,
         color = if (selected) activeBg else Color.Transparent,
-        modifier = modifier
+        modifier = modifier,
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 8.dp),
+            modifier = Modifier.padding(vertical = FinnerTheme.spacing.sm),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(FinnerTheme.spacing.xxs),
         ) {
             Icon(
                 imageVector = destination.icon,
                 contentDescription = destination.label,
-                modifier = Modifier.size(22.dp),
-                tint = contentColor
+                modifier = Modifier.size(FinnerTheme.sizes.iconXl),
+                tint = contentColor,
             )
             Text(
                 text = destination.label,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                style = if (selected) {
+                    FinnerTheme.typography.labelSmallBold
+                } else {
+                    FinnerTheme.typography.labelSmallMedium
+                },
                 color = contentColor,
-                maxLines = 1
+                maxLines = 1,
             )
         }
     }
@@ -591,10 +593,6 @@ private fun FloatingNavItem(
 // ---------------------------------------------------------------------------------------------
 // 5. Scaffold with Ambient Revolut Top Aura + Floating Dock
 // ---------------------------------------------------------------------------------------------
-
-private val NavBarSlotHeight = 84.dp
-private val FabGap = 12.dp
-private val EdgeGap = 16.dp
 
 @Composable
 fun FinnerFloatingScaffold(
@@ -606,66 +604,72 @@ fun FinnerFloatingScaffold(
     modifier: Modifier = Modifier,
     showBottomBar: Boolean = true,
     showTopAura: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val barState = rememberAutoHideBarState()
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val colors = FinnerTheme.colors
 
     LaunchedEffect(selectedDestination, showBottomBar) { barState.show() }
 
     val fabBottomPadding by animateDpAsState(
-        targetValue = if (showBottomBar && barState.isVisible) NavBarSlotHeight + FabGap else EdgeGap,
-        label = "fabBottomPadding"
+        targetValue = if (showBottomBar && barState.isVisible) {
+            sizes.floatingNavSlotHeight + spacing.fabGap
+        } else {
+            spacing.screenHorizontal
+        },
+        label = "fabBottomPadding",
     )
 
-    val auraStart = FinnerTheme.extendedColors.heroGradientStart
-    val background = MaterialTheme.colorScheme.background
+    val auraStart = colors.heroGradientStart
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(background)
+            .background(colors.background)
             .then(
                 if (showTopAura) {
                     Modifier.background(
                         brush = Brush.verticalGradient(
                             colorStops = arrayOf(
-                                0.0f to auraStart.copy(alpha = 0.45f),
-                                0.28f to auraStart.copy(alpha = 0.12f),
-                                0.52f to Color.Transparent
-                            )
-                        )
+                                0.0f to auraStart.copy(alpha = FinnerAlpha.auraTop),
+                                0.28f to auraStart.copy(alpha = FinnerAlpha.auraMid),
+                                0.52f to Color.Transparent,
+                            ),
+                        ),
                     )
                 } else {
                     Modifier
-                }
-            )
+                },
+            ),
     ) {
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(barState.connection),
             containerColor = Color.Transparent,
-            topBar = topBar
+            topBar = topBar,
         ) { innerPadding ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(innerPadding),
             ) {
                 content()
 
                 if (fabLabel != null) {
                     ExtendedFloatingActionButton(
                         onClick = onFabClick,
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = colors.primary,
+                        contentColor = colors.onPrimary,
                         icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                        text = { Text(fabLabel, fontWeight = FontWeight.Bold) },
-                        shape = CircleShape,
+                        text = { Text(fabLabel, style = FinnerTheme.typography.labelLargeBold) },
+                        shape = FinnerTheme.shapes.pill,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .navigationBarsPadding()
-                            .padding(end = EdgeGap, bottom = fabBottomPadding)
+                            .padding(end = spacing.screenHorizontal, bottom = fabBottomPadding),
                     )
                 }
 
@@ -676,7 +680,7 @@ fun FinnerFloatingScaffold(
                         visible = barState.isVisible,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 12.dp)
+                            .padding(bottom = spacing.floatingNavBottomMargin),
                     )
                 }
             }

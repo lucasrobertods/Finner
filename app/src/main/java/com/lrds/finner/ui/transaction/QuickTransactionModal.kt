@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -22,7 +20,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -37,9 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.lrds.finner.core.currency.CurrencyConverter
 import com.lrds.finner.core.model.HouseholdSession
 import com.lrds.finner.data.local.entity.CategoryEntity
@@ -48,6 +43,8 @@ import com.lrds.finner.data.local.entity.InstallmentContractEntity
 import com.lrds.finner.data.local.entity.TransactionEntity
 import com.lrds.finner.data.local.entity.TransactionType
 import com.lrds.finner.ui.dashboard.components.bucketColorFor
+import com.lrds.finner.ui.theme.FinnerAlpha
+import com.lrds.finner.ui.theme.FinnerTheme
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -71,7 +68,7 @@ fun QuickTransactionModal(
         type: TransactionType,
         userId: String,
         userDisplayName: String,
-        applyToSubsequentMonths: Boolean
+        applyToSubsequentMonths: Boolean,
     ) -> Unit,
     onSaveInstallmentContract: (
         description: String,
@@ -82,8 +79,8 @@ fun QuickTransactionModal(
         categoryId: String?,
         type: TransactionType,
         userId: String,
-        userDisplayName: String
-    ) -> Unit
+        userDisplayName: String,
+    ) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val isEditingTransaction = existingTransaction != null
@@ -98,7 +95,7 @@ fun QuickTransactionModal(
             existingTransaction?.type
                 ?: existingInstallmentContract?.type
                 ?: preselectedCategory?.type
-                ?: TransactionType.EXPENSE_LOCAL
+                ?: TransactionType.EXPENSE_LOCAL,
         )
     }
     val selectedCurrency = CurrencyCode.EUR
@@ -106,7 +103,7 @@ fun QuickTransactionModal(
         mutableStateOf(
             existingTransaction?.userDisplayName?.ifBlank { session.userDisplayName }
                 ?: existingInstallmentContract?.userDisplayName?.ifBlank { session.userDisplayName }
-                ?: session.userDisplayName
+                ?: session.userDisplayName,
         )
     }
     var description by remember(existingTransaction, existingInstallmentContract, preselectedCategory) {
@@ -114,7 +111,7 @@ fun QuickTransactionModal(
             existingTransaction?.description
                 ?: existingInstallmentContract?.name
                 ?: preselectedCategory?.name
-                ?: ""
+                ?: "",
         )
     }
     var amountText by remember(existingTransaction, existingInstallmentContract) {
@@ -125,7 +122,7 @@ fun QuickTransactionModal(
                 String.format(Locale.US, "%.2f", initialCents / 100.0)
             } else {
                 ""
-            }
+            },
         )
     }
     var initialInstallmentText by remember(existingInstallmentContract) {
@@ -139,7 +136,7 @@ fun QuickTransactionModal(
         .filter { it.year == selectedYear && it.month == selectedMonth && it.type == selectedType }
         .sortedWith(
             compareBy<CategoryEntity, String>(String.CASE_INSENSITIVE_ORDER) { it.envelopeName ?: "" }
-                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name }
+                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name },
         )
 
     // Unselected by default unless editing or opened from a category item's '+' button
@@ -149,7 +146,7 @@ fun QuickTransactionModal(
         preselectedCategory,
         selectedYear,
         selectedMonth,
-        selectedType
+        selectedType,
     ) {
         val editingCatId = existingTransaction?.categoryId ?: existingInstallmentContract?.categoryId
         val editingType = existingTransaction?.type ?: existingInstallmentContract?.type
@@ -169,7 +166,7 @@ fun QuickTransactionModal(
                 }
                 preselectedCategory != null && preselectedCategory.type == selectedType -> preselectedCategory.id
                 else -> null
-            }
+            },
         )
     }
 
@@ -224,7 +221,7 @@ fun QuickTransactionModal(
                 selectedCategoryId,
                 selectedType,
                 session.userId,
-                cleanMemberName
+                cleanMemberName,
             )
         } else {
             onSaveSingleTransaction(
@@ -235,24 +232,30 @@ fun QuickTransactionModal(
                 selectedType,
                 existingTransaction?.userId ?: session.userId,
                 cleanMemberName,
-                applyToSubsequentMonths
+                applyToSubsequentMonths,
             )
         }
         onDismiss()
     }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        containerColor = colors.surfaceContainerLow,
+        shape = shapes.bottomSheet,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = spacing.sheetHorizontal, vertical = spacing.sheetVertical),
+            verticalArrangement = Arrangement.spacedBy(spacing.md),
         ) {
             Text(
                 text = if (isEditing) {
@@ -260,8 +263,8 @@ fun QuickTransactionModal(
                 } else {
                     "New Entry — $monthLabel $selectedYear"
                 },
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                style = typography.titleLarge,
+                color = colors.onSurface,
             )
 
             // Entry Mode: Single Transaction vs Multi-Month Installment Contract (only when creating)
@@ -273,7 +276,7 @@ fun QuickTransactionModal(
                             isInstallment = false
                             showSubsequentMonthsPrompt = false
                         },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                     ) {
                         Text("Single")
                     }
@@ -286,7 +289,7 @@ fun QuickTransactionModal(
                                 selectedType = TransactionType.EXPENSE_BRAZIL
                             }
                         },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                     ) {
                         Text("Installment (1/N)")
                     }
@@ -310,8 +313,8 @@ fun QuickTransactionModal(
                         },
                         shape = SegmentedButtonDefaults.itemShape(
                             index = index,
-                            count = availableTypes.size
-                        )
+                            count = availableTypes.size,
+                        ),
                     ) {
                         Text(type.label)
                     }
@@ -328,13 +331,13 @@ fun QuickTransactionModal(
                 label = {
                     Text(
                         if (isInstallment) "Contract / Installment Description *"
-                        else "Description (e.g., Groceries, Salary) *"
+                        else "Description (e.g., Groceries, Salary) *",
                     )
                 },
                 isError = descriptionError != null,
                 supportingText = descriptionError?.let { err -> { Text(err) } },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             OutlinedTextField(
@@ -346,20 +349,20 @@ fun QuickTransactionModal(
                 label = {
                     Text(
                         if (isInstallment) "Installment Amount (€) *"
-                        else "Amount (€) *"
+                        else "Amount (€) *",
                     )
                 },
                 isError = amountError != null,
                 supportingText = amountError?.let { err -> { Text(err) } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             if (isInstallment && (!isEditing || isEditingInstallment)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md),
                 ) {
                     OutlinedTextField(
                         value = initialInstallmentText,
@@ -370,13 +373,13 @@ fun QuickTransactionModal(
                         label = {
                             Text(
                                 if (isEditingInstallment) "Initial Installment *"
-                                else "Installment in $monthLabel *"
+                                else "Installment in $monthLabel *",
                             )
                         },
                         isError = installmentError != null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     OutlinedTextField(
                         value = totalInstallmentsText,
@@ -388,14 +391,14 @@ fun QuickTransactionModal(
                         isError = installmentError != null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
                 if (installmentError != null) {
                     Text(
                         text = installmentError!!,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
+                        style = typography.bodySmall,
+                        color = colors.error,
                     )
                 }
             }
@@ -406,22 +409,23 @@ fun QuickTransactionModal(
                 onValueChange = { authorDisplayName = it },
                 label = { Text("Responsible / Family Member") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             // Category selector with bucket colors
             Text(
                 text = if (selectedType == TransactionType.INCOME) "Category *" else "Category & Envelope *",
-                style = MaterialTheme.typography.labelLarge
+                style = typography.labelLarge,
+                color = colors.onSurface,
             )
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(spacing.xs),
             ) {
                 matchingCategories.forEach { category ->
                     val isSelected = selectedCategoryId == category.id
                     val hasBucket = category.type != TransactionType.INCOME && !category.envelopeName.isNullOrBlank()
-                    val chipColor = if (hasBucket) bucketColorFor(category.envelopeName) else MaterialTheme.colorScheme.primary
+                    val chipColor = if (hasBucket) bucketColorFor(category.envelopeName) else colors.primary
                     val chipLabel = if (!hasBucket) {
                         category.name
                     } else {
@@ -436,57 +440,57 @@ fun QuickTransactionModal(
                         label = {
                             Text(
                                 text = chipLabel,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                style = if (isSelected) typography.labelLargeBold else typography.labelLargeMedium,
                             )
                         },
                         colors = if (hasBucket) {
                             FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = chipColor.copy(alpha = 0.22f),
+                                selectedContainerColor = chipColor.copy(alpha = FinnerAlpha.selectedContainer),
                                 selectedLabelColor = chipColor,
-                                labelColor = chipColor
+                                labelColor = chipColor,
                             )
                         } else {
                             FilterChipDefaults.filterChipColors()
                         },
                         border = if (hasBucket) {
                             BorderStroke(
-                                width = if (isSelected) 1.5.dp else 1.dp,
-                                color = if (isSelected) chipColor else chipColor.copy(alpha = 0.5f)
+                                width = if (isSelected) sizes.borderSelected else sizes.borderThin,
+                                color = if (isSelected) chipColor else chipColor.copy(alpha = FinnerAlpha.unselectedBorder),
                             )
                         } else {
                             FilterChipDefaults.filterChipBorder(
                                 enabled = true,
-                                selected = isSelected
+                                selected = isSelected,
                             )
-                        }
+                        },
                     )
                 }
                 FilterChip(
                     selected = false,
                     onClick = { onRequestCreateCategory(selectedType) },
-                    label = { Text("+ New Category") }
+                    label = { Text("+ New Category") },
                 )
             }
             if (categoryError != null) {
                 Text(
                     text = categoryError!!,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
+                    style = typography.bodySmall,
+                    color = colors.error,
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(spacing.xs))
 
             if (showSubsequentMonthsPrompt) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
+                        containerColor = colors.secondaryContainer,
+                    ),
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.padding(spacing.cardPadding),
+                        verticalArrangement = Arrangement.spacedBy(spacing.md),
                     ) {
                         Text(
                             text = if (isEditing) {
@@ -494,23 +498,22 @@ fun QuickTransactionModal(
                             } else {
                                 "Do you want to add this inflow to subsequent months ($monthLabel to DEC) or only in $monthLabel? (Each month remains independent for later edits)"
                             },
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            style = typography.bodyMediumSemiBold,
+                            color = colors.onSecondaryContainer,
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                         ) {
                             OutlinedButton(
                                 onClick = { commitSave(applyToSubsequentMonths = false) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             ) {
                                 Text("Only $monthLabel")
                             }
                             Button(
                                 onClick = { commitSave(applyToSubsequentMonths = true) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             ) {
                                 Text("$monthLabel and following")
                             }
@@ -531,14 +534,14 @@ fun QuickTransactionModal(
                             }
                         }
                     },
-                    shape = CircleShape,
+                    shape = shapes.pill,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.inverseSurface,
-                        contentColor = MaterialTheme.colorScheme.inverseOnSurface
+                        containerColor = colors.inverseSurface,
+                        contentColor = colors.inverseOnSurface,
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .height(sizes.primaryButtonHeight),
                 ) {
                     Text(
                         text = when {
@@ -546,13 +549,12 @@ fun QuickTransactionModal(
                             isInstallment -> "Save Installment ($selectedMonth/$selectedYear)"
                             else -> "Save Transaction"
                         },
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                        style = typography.titleSmallBold,
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.sheetBottomPadding))
         }
     }
 }

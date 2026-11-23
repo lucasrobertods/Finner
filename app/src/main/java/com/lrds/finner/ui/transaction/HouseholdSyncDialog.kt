@@ -14,7 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -28,11 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
 import com.lrds.finner.core.model.HouseholdSession
+import com.lrds.finner.ui.theme.FinnerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +42,7 @@ fun HouseholdSyncDialog(
     onSaveProfileAndWorkspace: (displayName: String, householdId: String, householdName: String) -> Unit,
     onSignInWithFirebaseEmail: (email: String, password: String, displayName: String, householdId: String) -> Unit,
     onSignInWithGoogle: (activityContext: Context, webClientId: String?, displayName: String, householdId: String) -> Unit,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val activityContext = LocalContext.current
@@ -55,69 +53,75 @@ fun HouseholdSyncDialog(
     var password by remember { mutableStateOf("") }
     var webClientIdInput by remember(configuredWebClientId) { mutableStateOf(configuredWebClientId ?: "") }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        containerColor = colors.surfaceContainerLow,
+        shape = shapes.bottomSheet,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(horizontal = spacing.sheetHorizontal, vertical = spacing.sheetVertical),
+            verticalArrangement = Arrangement.spacedBy(spacing.md),
         ) {
             Text(
                 text = "Firebase Auth & Workspace (lrds-finner)",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                style = typography.titleLarge,
+                color = colors.onSurface,
             )
             Text(
                 text = "Share the same Workspace Code (Household ID) across devices to synchronize in real time via Cloud Firestore.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
             OutlinedTextField(
                 value = displayName,
                 onValueChange = { displayName = it },
                 label = { Text("Your Name") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = householdName,
                 onValueChange = { householdName = it },
                 label = { Text("Budget Name") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = householdId,
                 onValueChange = { householdId = it },
                 label = { Text("Workspace Code (Household ID)") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
-            HorizontalDivider()
+            HorizontalDivider(color = colors.cardBorder)
 
             if (session.isFirebaseAuthenticated) {
                 Text(
                     text = "Signed in to Firebase: ${session.userEmail ?: session.userId}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    style = typography.bodyMediumBold,
+                    color = colors.primary,
                 )
                 OutlinedButton(
                     onClick = onSignOut,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Sign Out of Firebase")
                 }
             } else {
                 Text(
                     text = "1. Google Sign-In",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
+                    style = typography.labelMediumBold,
+                    color = colors.onSurface,
                 )
                 if (configuredWebClientId.isNullOrBlank()) {
                     OutlinedTextField(
@@ -125,7 +129,7 @@ fun HouseholdSyncDialog(
                         onValueChange = { webClientIdInput = it },
                         label = { Text("Web Client ID (Firebase OAuth 2.0)") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 Button(
@@ -134,20 +138,20 @@ fun HouseholdSyncDialog(
                             activityContext,
                             webClientIdInput.ifBlank { configuredWebClientId },
                             displayName,
-                            householdId
+                            householdId,
                         )
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Sign in with Google")
                 }
 
-                HorizontalDivider()
+                HorizontalDivider(color = colors.cardBorder)
 
                 Text(
                     text = "2. Email & Password (Firebase Auth)",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
+                    style = typography.labelMediumBold,
+                    color = colors.onSurface,
                 )
                 OutlinedTextField(
                     value = email,
@@ -155,7 +159,7 @@ fun HouseholdSyncDialog(
                     label = { Text("Email") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = password,
@@ -164,7 +168,7 @@ fun HouseholdSyncDialog(
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedButton(
                     onClick = {
@@ -172,7 +176,7 @@ fun HouseholdSyncDialog(
                             onSignInWithFirebaseEmail(email, password, displayName, householdId)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Sign In / Create Account with Email")
                 }
@@ -181,18 +185,18 @@ fun HouseholdSyncDialog(
             if (!feedbackMessage.isNullOrBlank()) {
                 Text(
                     text = feedbackMessage,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
+                    style = typography.bodySmall,
+                    color = colors.primary,
                 )
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.md),
             ) {
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text("Close")
                 }
@@ -201,13 +205,13 @@ fun HouseholdSyncDialog(
                         onSaveProfileAndWorkspace(displayName, householdId, householdName)
                         onDismiss()
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text("Save Workspace")
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.sheetBottomPadding))
         }
     }
 }
