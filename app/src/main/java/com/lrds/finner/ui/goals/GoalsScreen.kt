@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -30,7 +29,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,10 +41,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.lrds.finner.core.currency.CurrencyConverter
 import com.lrds.finner.data.local.entity.CurrencyCode
@@ -58,7 +54,7 @@ import com.lrds.finner.ui.dashboard.components.FinnerSectionCard
 import com.lrds.finner.ui.dashboard.components.bucketColorFor
 import com.lrds.finner.ui.dashboard.components.bucketIconFor
 import com.lrds.finner.ui.navigation.FinnerRoute
-import com.lrds.finner.ui.theme.FinnerNumericStyles
+import com.lrds.finner.ui.theme.FinnerAlpha
 import com.lrds.finner.ui.theme.FinnerTheme
 import java.time.YearMonth
 import kotlin.math.ceil
@@ -77,7 +73,7 @@ fun GoalsScreen(
     onDeleteGoal: (GoalEntity) -> Unit,
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
-    reselectEvents: Flow<NavKey> = emptyFlow()
+    reselectEvents: Flow<NavKey> = emptyFlow(),
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(reselectEvents) {
@@ -115,11 +111,17 @@ fun GoalsScreen(
         0f
     }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .testTag("screen_goals")
+            .background(colors.background)
+            .testTag("screen_goals"),
     ) {
         topBar()
 
@@ -128,51 +130,57 @@ fun GoalsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .navigationBarsPadding(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 124.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            contentPadding = PaddingValues(
+                start = spacing.screenHorizontal,
+                end = spacing.screenHorizontal,
+                top = spacing.sm,
+                bottom = spacing.floatingNavBottomClearance,
+            ),
+            verticalArrangement = Arrangement.spacedBy(spacing.itemGap),
         ) {
             // Header + "+ New Goal" mint pill
             item(key = "goals_header") {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column {
                         Text(
                             text = "Financial Goals",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = typography.titleLarge,
+                            color = colors.onSurface,
                         )
                         Text(
                             text = "${goals.size} active ${if (goals.size == 1) "target" else "targets"} · ${(overallProgress * 100).toInt()}% completed",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
                         )
                     }
 
                     Surface(
                         onClick = onAddGoal,
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary
+                        shape = shapes.pill,
+                        color = colors.primary,
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                            modifier = Modifier.padding(
+                                horizontal = spacing.pillHorizontal,
+                                vertical = spacing.pillVertical,
+                            ),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.xs),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(16.dp)
+                                tint = colors.onPrimary,
+                                modifier = Modifier.size(sizes.iconSm),
                             )
                             Text(
                                 text = "New Goal",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                style = typography.labelLargeBold,
+                                color = colors.onPrimary,
                             )
                         }
                     }
@@ -186,53 +194,54 @@ fun GoalsScreen(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
                                 text = "TOTAL SAVED PROGRESS",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = typography.labelSmall,
+                                color = colors.onSurfaceVariant,
                             )
                             Surface(
-                                shape = CircleShape,
-                                color = FinnerTheme.extendedColors.inflowContainer
+                                shape = shapes.pill,
+                                color = colors.inflowContainer,
                             ) {
                                 Text(
                                     text = "${(overallProgress * 100).toInt()}%",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = FinnerTheme.extendedColors.inflow,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    style = typography.labelSmallBold,
+                                    color = colors.inflow,
+                                    modifier = Modifier.padding(
+                                        horizontal = spacing.badgeHorizontal,
+                                        vertical = spacing.xs,
+                                    ),
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(spacing.compactPillVertical))
                         Row(
                             verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                         ) {
                             Text(
                                 text = CurrencyConverter.formatCents(totalSavedEur, CurrencyCode.EUR),
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                style = FinnerTheme.numericStyles.sectionAmount,
+                                color = colors.onSurface,
                             )
                             Text(
                                 text = "/ ${CurrencyConverter.formatCents(totalTargetEur, CurrencyCode.EUR)}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(bottom = 2.dp)
+                                style = typography.bodyMedium,
+                                color = colors.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = spacing.xxs),
                             )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(spacing.md))
                         LinearProgressIndicator(
                             progress = { overallProgress },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(CircleShape),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                .height(sizes.progressBarMd)
+                                .clip(shapes.pill),
+                            color = colors.primary,
+                            trackColor = colors.surfaceContainerHighest,
                         )
                     }
                 }
@@ -241,17 +250,16 @@ fun GoalsScreen(
             if (goals.isEmpty()) {
                 item(key = "goals_empty") {
                     FinnerSectionCard {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(spacing.compactPillVertical)) {
                             Text(
                                 text = "No goals registered yet.",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                style = typography.titleSmallBold,
+                                color = colors.onSurface,
                             )
                             Text(
                                 text = "Tap '+ New Goal' above to create financial targets and link them to a bucket for automatic pace forecasts.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = typography.bodySmall,
+                                color = colors.onSurfaceVariant,
                             )
                         }
                     }
@@ -261,7 +269,7 @@ fun GoalsScreen(
                     var menuExpanded by remember { mutableStateOf(false) }
                     val bucketName = goal.bucketName
                     val hasBucket = !bucketName.isNullOrBlank()
-                    val bucketColor = if (hasBucket) bucketColorFor(bucketName) else MaterialTheme.colorScheme.primary
+                    val bucketColor = if (hasBucket) bucketColorFor(bucketName) else colors.primary
 
                     val bucketYearlyActualEurCents = if (hasBucket) {
                         monthlyDataByMonth.values.sumOf { mData ->
@@ -338,163 +346,169 @@ fun GoalsScreen(
                         else -> null
                     }
 
-                    FinnerSectionCard(contentPadding = PaddingValues(16.dp)) {
+                    FinnerSectionCard(contentPadding = PaddingValues(spacing.cardPadding)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.md),
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(bucketColor.copy(alpha = 0.16f)),
-                                contentAlignment = Alignment.Center
+                                    .size(sizes.iconBadgeMd)
+                                    .clip(shapes.pill)
+                                    .background(bucketColor.copy(alpha = FinnerAlpha.tintedContainer)),
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     imageVector = if (hasBucket) bucketIconFor(bucketName) else Icons.Default.Flag,
                                     contentDescription = null,
                                     tint = bucketColor,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(sizes.iconMd),
                                 )
                             }
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = goal.title,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    style = typography.titleSmallBold,
+                                    color = colors.onSurface,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
                                 ) {
                                     if (hasBucket) {
                                         Text(
                                             text = bucketName!!,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = bucketColor
+                                            style = typography.labelSmall,
+                                            color = bucketColor,
                                         )
                                         Text(
                                             text = "·",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            style = typography.labelSmall,
+                                            color = colors.onSurfaceVariant,
                                         )
                                     }
                                     Text(
                                         text = goal.priority.label,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        style = typography.labelSmall,
+                                        color = colors.onSurfaceVariant,
                                     )
                                 }
                             }
 
                             Surface(
                                 onClick = { onIncrementGoal(goal) },
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                border = BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder)
+                                shape = shapes.pill,
+                                color = colors.surfaceContainerHigh,
+                                border = BorderStroke(sizes.borderThin, colors.cardBorder),
                             ) {
                                 Text(
                                     text = "+100 ${goal.currency.symbol}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    style = typography.labelSmall,
+                                    color = colors.primary,
+                                    modifier = Modifier.padding(
+                                        horizontal = spacing.compactPillHorizontal,
+                                        vertical = spacing.compactPillVertical,
+                                    ),
                                 )
                             }
 
                             Box {
                                 IconButton(
                                     onClick = { menuExpanded = true },
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(sizes.iconButtonSm),
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.MoreHoriz,
                                         contentDescription = "Goal actions",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(18.dp)
+                                        tint = colors.onSurfaceVariant,
+                                        modifier = Modifier.size(sizes.iconMd),
                                     )
                                 }
                                 DropdownMenu(
                                     expanded = menuExpanded,
-                                    onDismissRequest = { menuExpanded = false }
+                                    onDismissRequest = { menuExpanded = false },
                                 ) {
                                     DropdownMenuItem(
-                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Default.Edit,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(sizes.iconMd),
+                                            )
+                                        },
                                         text = { Text("Edit goal") },
                                         onClick = {
                                             menuExpanded = false
                                             onEditGoal(goal)
-                                        }
+                                        },
                                     )
                                     DropdownMenuItem(
                                         leadingIcon = {
                                             Icon(
                                                 Icons.Default.DeleteOutline,
                                                 contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.error,
-                                                modifier = Modifier.size(18.dp)
+                                                tint = colors.error,
+                                                modifier = Modifier.size(sizes.iconMd),
                                             )
                                         },
-                                        text = { Text("Delete goal", color = MaterialTheme.colorScheme.error) },
+                                        text = { Text("Delete goal", color = colors.error) },
                                         onClick = {
                                             menuExpanded = false
                                             onDeleteGoal(goal)
-                                        }
+                                        },
                                     )
                                 }
                             }
                         }
 
                         if (goal.notes.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(spacing.compactPillVertical))
                             Text(
                                 text = goal.notes,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = typography.bodySmall,
+                                color = colors.onSurfaceVariant,
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(spacing.md))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
                                 text = "${CurrencyConverter.formatCents(effectiveSavedCents, goal.currency)} / ${CurrencyConverter.formatCents(goal.targetAmountCents, goal.currency)}",
-                                style = FinnerNumericStyles.rowAmount,
-                                color = MaterialTheme.colorScheme.onSurface
+                                style = FinnerTheme.numericStyles.rowAmount,
+                                color = colors.onSurface,
                             )
                             Text(
                                 text = "${(effectiveProgress * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = bucketColor
+                                style = typography.labelMediumBold,
+                                color = bucketColor,
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(spacing.compactPillVertical))
                         LinearProgressIndicator(
                             progress = { effectiveProgress },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(5.dp)
-                                .clip(CircleShape),
+                                .height(sizes.progressBarMd)
+                                .clip(shapes.pill),
                             color = bucketColor,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            trackColor = colors.surfaceContainerHighest,
                         )
 
                         if (forecastText != null) {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(spacing.sm))
                             Text(
                                 text = forecastText,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = typography.labelSmall,
+                                color = colors.onSurfaceVariant,
                             )
                         }
                     }
@@ -519,8 +533,8 @@ private fun GoalsScreenPreview() {
                     currency = CurrencyCode.EUR,
                     priority = GoalPriority.LONG_TERM,
                     bucketName = "Reserve",
-                    notes = "6 months of essential household expenses"
-                )
+                    notes = "6 months of essential household expenses",
+                ),
             ),
             selectedYear = 2026,
             selectedMonth = 11,
@@ -528,7 +542,7 @@ private fun GoalsScreenPreview() {
             onAddGoal = {},
             onIncrementGoal = {},
             onEditGoal = {},
-            onDeleteGoal = {}
+            onDeleteGoal = {},
         )
     }
 }

@@ -19,7 +19,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -32,16 +31,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.lrds.finner.core.currency.CurrencyConverter
 import com.lrds.finner.data.local.entity.CategoryEntity
 import com.lrds.finner.data.local.entity.CurrencyCode
 import com.lrds.finner.data.local.entity.EnvelopeType
 import com.lrds.finner.data.local.entity.TransactionType
 import com.lrds.finner.ui.dashboard.components.bucketColorFor
+import com.lrds.finner.ui.theme.FinnerAlpha
+import com.lrds.finner.ui.theme.FinnerTheme
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -64,8 +62,8 @@ fun CategoryDialog(
         plannedAmountCents: Long,
         plannedPercentage: Double?,
         currency: CurrencyCode,
-        applyToSubsequentMonths: Boolean
-    ) -> Unit
+        applyToSubsequentMonths: Boolean,
+    ) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val isEditing = existingCategory != null
@@ -78,7 +76,7 @@ fun CategoryDialog(
         mutableStateOf(
             existingCategory?.envelopeName
                 ?: availableBuckets.firstOrNull()
-                ?: EnvelopeType.BILLS.displayName
+                ?: EnvelopeType.BILLS.displayName,
         )
     }
     val selectedCurrency = if (fixedType == TransactionType.EXPENSE_BRAZIL) {
@@ -98,7 +96,7 @@ fun CategoryDialog(
                 } else {
                     String.format(Locale.US, "%.2f", pct)
                 }
-            } ?: ""
+            } ?: "",
         )
     }
     var plannedAmountText by remember(existingCategory) {
@@ -107,7 +105,7 @@ fun CategoryDialog(
                 String.format(Locale.US, "%.2f", existingCategory.plannedAmountCents / 100.0)
             } else {
                 ""
-            }
+            },
         )
     }
 
@@ -170,21 +168,29 @@ fun CategoryDialog(
             plannedCents.coerceAtLeast(0L),
             pctForSave,
             selectedCurrency,
-            applyToSubsequentMonths
+            applyToSubsequentMonths,
         )
         onDismiss()
     }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        containerColor = colors.surfaceContainerLow,
+        shape = shapes.bottomSheet,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = spacing.sheetHorizontal, vertical = spacing.sheetVertical),
+            verticalArrangement = Arrangement.spacedBy(spacing.md),
         ) {
             Text(
                 text = if (isEditing) {
@@ -192,8 +198,8 @@ fun CategoryDialog(
                 } else {
                     "New Category (${fixedType.label}) — $monthLabel $selectedYear"
                 },
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                style = typography.titleLarge,
+                color = colors.onSurface,
             )
 
             OutlinedTextField(
@@ -206,18 +212,19 @@ fun CategoryDialog(
                 isError = nameError != null,
                 supportingText = nameError?.let { err -> { Text(err) } },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             // Inflows do not have buckets associated
             if (fixedType != TransactionType.INCOME) {
                 Text(
                     text = "Envelope / Bucket *",
-                    style = MaterialTheme.typography.labelMedium
+                    style = typography.labelMedium,
+                    color = colors.onSurfaceVariant,
                 )
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
+                    verticalArrangement = Arrangement.spacedBy(spacing.xs),
                 ) {
                     val displayedBuckets = remember(availableBuckets, selectedBucket) {
                         buildList {
@@ -239,39 +246,39 @@ fun CategoryDialog(
                             label = {
                                 Text(
                                     text = bucket,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    style = if (isSelected) typography.labelLargeBold else typography.labelLargeMedium,
                                 )
                             },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = bColor.copy(alpha = 0.22f),
+                                selectedContainerColor = bColor.copy(alpha = FinnerAlpha.selectedContainer),
                                 selectedLabelColor = bColor,
-                                labelColor = bColor
+                                labelColor = bColor,
                             ),
                             border = BorderStroke(
-                                width = if (isSelected) 1.5.dp else 1.dp,
-                                color = if (isSelected) bColor else bColor.copy(alpha = 0.5f)
-                            )
+                                width = if (isSelected) sizes.borderSelected else sizes.borderThin,
+                                color = if (isSelected) bColor else bColor.copy(alpha = FinnerAlpha.unselectedBorder),
+                            ),
                         )
                     }
                     FilterChip(
                         selected = showNewBucketField,
                         onClick = { showNewBucketField = !showNewBucketField },
-                        label = { Text("+ New Bucket") }
+                        label = { Text("+ New Bucket") },
                     )
                 }
 
                 if (bucketError != null) {
                     Text(
                         text = bucketError!!,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
+                        style = typography.bodySmall,
+                        color = colors.error,
                     )
                 }
 
                 if (showNewBucketField) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                     ) {
                         OutlinedTextField(
                             value = newBucketText,
@@ -283,7 +290,7 @@ fun CategoryDialog(
                             isError = newBucketError != null,
                             supportingText = newBucketError?.let { err -> { Text(err) } },
                             singleLine = true,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                         Button(
                             onClick = {
@@ -298,7 +305,7 @@ fun CategoryDialog(
                                     showNewBucketField = false
                                 }
                             },
-                            modifier = Modifier.padding(top = 8.dp)
+                            modifier = Modifier.padding(top = spacing.sm),
                         ) {
                             Text("Create")
                         }
@@ -310,24 +317,26 @@ fun CategoryDialog(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                    )
+                        containerColor = colors.surfaceContainerHighest,
+                    ),
                 ) {
                     Column(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                        modifier = Modifier.padding(
+                            horizontal = spacing.cardPaddingCompactHorizontal,
+                            vertical = spacing.md,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(spacing.xxs),
                     ) {
                         Text(
                             text = "Planned Inflows ($monthLabel): ${CurrencyConverter.formatCents(plannedIncomeEurCents, CurrencyCode.EUR)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF4CAF50)
+                            style = typography.bodyMediumSemiBold,
+                            color = colors.inflow,
                         )
                         if (selectedCurrency == CurrencyCode.BRL) {
                             Text(
                                 text = "In BRL: ${CurrencyConverter.formatCents(plannedInflowsInSelectedCurrencyCents, CurrencyCode.BRL)}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = FinnerTheme.numericStyles.metaAmount,
+                                color = colors.onSurfaceVariant,
                             )
                         }
                     }
@@ -335,11 +344,12 @@ fun CategoryDialog(
 
                 Text(
                     text = "Planned Value Mode",
-                    style = MaterialTheme.typography.labelMedium
+                    style = typography.labelMedium,
+                    color = colors.onSurfaceVariant,
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                 ) {
                     FilterChip(
                         selected = !usePercentageMode,
@@ -347,7 +357,7 @@ fun CategoryDialog(
                             usePercentageMode = false
                             percentageError = null
                         },
-                        label = { Text("Fixed Value") }
+                        label = { Text("Fixed Value") },
                     )
                     FilterChip(
                         selected = usePercentageMode,
@@ -355,7 +365,7 @@ fun CategoryDialog(
                             usePercentageMode = true
                             percentageError = null
                         },
-                        label = { Text("% of Planned Inflows") }
+                        label = { Text("% of Planned Inflows") },
                     )
                 }
             }
@@ -372,7 +382,7 @@ fun CategoryDialog(
                     supportingText = percentageError?.let { err -> { Text(err) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             } else {
                 OutlinedTextField(
@@ -381,7 +391,7 @@ fun CategoryDialog(
                     label = { Text("Planned Amount (${selectedCurrency.symbol})") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 
@@ -393,23 +403,25 @@ fun CategoryDialog(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-                    )
+                        containerColor = colors.primaryContainer.copy(alpha = FinnerAlpha.previewContainer),
+                    ),
                 ) {
                     Column(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                        modifier = Modifier.padding(
+                            horizontal = spacing.cardPaddingCompactHorizontal,
+                            vertical = spacing.md,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(spacing.xxs),
                     ) {
                         Text(
                             text = "Amount to be added ($pctDisplay of Inflows): ${CurrencyConverter.formatCents(calculatedPercentageAmountCents, selectedCurrency)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            style = typography.bodyMediumBold,
+                            color = colors.onPrimaryContainer,
                         )
                         Text(
                             text = "Automatically updates whenever Planned Inflows change.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            style = typography.labelSmall,
+                            color = colors.onPrimaryContainer,
                         )
                     }
                 }
@@ -419,12 +431,12 @@ fun CategoryDialog(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
+                        containerColor = colors.secondaryContainer,
+                    ),
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.padding(spacing.cardPadding),
+                        verticalArrangement = Arrangement.spacedBy(spacing.md),
                     ) {
                         Text(
                             text = if (isEditing) {
@@ -432,23 +444,22 @@ fun CategoryDialog(
                             } else {
                                 "Do you want to create this category in subsequent months ($monthLabel to DEC) or only in $monthLabel?"
                             },
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            style = typography.bodyMediumSemiBold,
+                            color = colors.onSecondaryContainer,
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                         ) {
                             OutlinedButton(
                                 onClick = { commitSave(applyToSubsequentMonths = false) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             ) {
                                 Text("Only $monthLabel")
                             }
                             Button(
                                 onClick = { commitSave(applyToSubsequentMonths = true) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             ) {
                                 Text("$monthLabel and following")
                             }
@@ -458,11 +469,11 @@ fun CategoryDialog(
             } else {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md),
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     ) {
                         Text("Cancel")
                     }
@@ -479,14 +490,14 @@ fun CategoryDialog(
                                 }
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     ) {
                         Text("Save")
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.sheetBottomPadding))
         }
     }
 }

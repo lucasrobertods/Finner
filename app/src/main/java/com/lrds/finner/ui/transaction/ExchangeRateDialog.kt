@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -22,9 +21,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
+import com.lrds.finner.ui.theme.FinnerTheme
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,7 +32,7 @@ fun ExchangeRateDialog(
     selectedYear: Int = 2026,
     currentRate: Double,
     onDismiss: () -> Unit,
-    onConfirmRate: (Double) -> Unit
+    onConfirmRate: (Double) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var rateInput by remember(currentRate) {
@@ -42,25 +40,32 @@ fun ExchangeRateDialog(
     }
     var rateError by remember { mutableStateOf<String?>(null) }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        containerColor = colors.surfaceContainerLow,
+        shape = shapes.bottomSheet,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = spacing.sheetHorizontal, vertical = spacing.sheetVertical),
+            verticalArrangement = Arrangement.spacedBy(spacing.md),
         ) {
             Text(
                 text = "Euro Exchange Rate — $monthLabel $selectedYear",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                style = typography.titleLarge,
+                color = colors.onSurface,
             )
             Text(
                 text = "Set the manual Euro exchange rate (1 € in R$) to convert Brazil commitments for this month.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodyMedium,
+                color = colors.onSurfaceVariant,
             )
             OutlinedTextField(
                 value = rateInput,
@@ -73,16 +78,16 @@ fun ExchangeRateDialog(
                 supportingText = rateError?.let { err -> { Text(err) } },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.md),
             ) {
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text("Cancel")
                 }
@@ -96,13 +101,13 @@ fun ExchangeRateDialog(
                             onDismiss()
                         }
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text("Save")
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.sheetBottomPadding))
         }
     }
 }

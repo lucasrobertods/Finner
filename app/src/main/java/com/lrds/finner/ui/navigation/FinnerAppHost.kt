@@ -2,7 +2,6 @@ package com.lrds.finner.ui.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +36,7 @@ import com.lrds.finner.ui.dashboard.components.FinnerTopBar
 import com.lrds.finner.ui.goals.GoalsScreen
 import com.lrds.finner.ui.history.HistoryScreen
 import com.lrds.finner.ui.profile.ProfileScreen
+import com.lrds.finner.ui.theme.FinnerTheme
 import com.lrds.finner.ui.transaction.BucketDialog
 import com.lrds.finner.ui.transaction.CategoryDialog
 import com.lrds.finner.ui.transaction.ConfirmDeleteBottomSheet
@@ -271,8 +271,8 @@ fun FinnerAppHost(
                 ) {
                     Text(
                         text = "Loading $monthFullName ${key.year}...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = FinnerTheme.typography.bodyMedium,
+                        color = FinnerTheme.colors.onSurfaceVariant
                     )
                 }
             }

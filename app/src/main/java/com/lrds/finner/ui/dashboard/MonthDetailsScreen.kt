@@ -21,8 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -40,7 +38,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,9 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.lrds.finner.core.currency.CurrencyConverter
 import com.lrds.finner.data.local.entity.CategoryEntity
 import com.lrds.finner.data.local.entity.CurrencyCode
@@ -68,14 +63,13 @@ import com.lrds.finner.domain.model.MonthlyDashboardData
 import com.lrds.finner.ui.dashboard.components.ExchangeRateChip
 import com.lrds.finner.ui.dashboard.components.FinnerSectionCard
 import com.lrds.finner.ui.dashboard.components.bucketColorFor
-import com.lrds.finner.ui.dashboard.components.bucketIconFor
-import com.lrds.finner.ui.theme.FinnerNumericStyles
+import com.lrds.finner.ui.theme.FinnerAlpha
 import com.lrds.finner.ui.theme.FinnerTheme
 import java.time.LocalDate
 
 data class MonthDetailsFilter(
     val initialType: TransactionType? = null,
-    val initialBucket: String? = null
+    val initialBucket: String? = null,
 )
 
 @Composable
@@ -96,7 +90,7 @@ fun MonthDetailsScreen(
     onEditInstallment: (ActiveInstallmentItem) -> Unit,
     onDeleteInstallment: (ActiveInstallmentItem) -> Unit,
     onToggleInstallmentPaid: (ActiveInstallmentItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var selectedType by rememberSaveable(data.year, data.month, initialFilter.initialType) {
         mutableStateOf(initialFilter.initialType)
@@ -159,7 +153,7 @@ fun MonthDetailsScreen(
                 TransactionType.INCOME -> "Inflows (€)"
                 TransactionType.EXPENSE_LOCAL -> "Outflows (€)"
                 TransactionType.EXPENSE_BRAZIL -> "Brazil (R$)"
-            }
+            },
         )
         if (!selectedBucket.isNullOrBlank()) {
             append(" · ")
@@ -167,34 +161,40 @@ fun MonthDetailsScreen(
         }
     }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .testTag("screen_month_details")
+            .background(colors.background)
+            .testTag("screen_month_details"),
     ) {
         // Sticky-style Revolut Detail Top Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = spacing.screenHorizontal, vertical = spacing.topBarVertical),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Surface(
                 onClick = onBack,
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                border = BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder),
-                modifier = Modifier.size(40.dp)
+                shape = shapes.pill,
+                color = colors.surfaceContainerHigh,
+                border = BorderStroke(sizes.borderThin, colors.cardBorder),
+                modifier = Modifier.size(sizes.iconButtonLg),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(20.dp)
+                        tint = colors.onSurface,
+                        modifier = Modifier.size(sizes.iconLg),
                     )
                 }
             }
@@ -202,47 +202,48 @@ fun MonthDetailsScreen(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = spacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     text = "$monthFullName ${data.year}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = typography.titleMediumBold,
+                    color = colors.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = filterSubtitle.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = typography.labelSmall,
+                    color = colors.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
             Surface(
                 onClick = onAddTransaction,
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.inverseSurface
+                shape = shapes.pill,
+                color = colors.inverseSurface,
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                    modifier = Modifier.padding(
+                        horizontal = spacing.pillHorizontal,
+                        vertical = spacing.pillVertical,
+                    ),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.xs),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.inverseOnSurface,
-                        modifier = Modifier.size(16.dp)
+                        tint = colors.inverseOnSurface,
+                        modifier = Modifier.size(sizes.iconSm),
                     )
                     Text(
                         text = "Add",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.inverseOnSurface
+                        style = typography.labelLargeBold,
+                        color = colors.inverseOnSurface,
                     )
                 }
             }
@@ -251,35 +252,35 @@ fun MonthDetailsScreen(
         // Type Filter Pills (All / Inflows / Outflows / Brazil)
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(horizontal = spacing.screenHorizontal, vertical = spacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
             item {
                 DetailFilterPill(
                     label = "All",
                     selected = selectedType == null,
-                    onClick = { selectedType = null }
+                    onClick = { selectedType = null },
                 )
             }
             item {
                 DetailFilterPill(
                     label = "Inflows ($incomeCount)",
                     selected = selectedType == TransactionType.INCOME,
-                    onClick = { selectedType = TransactionType.INCOME }
+                    onClick = { selectedType = TransactionType.INCOME },
                 )
             }
             item {
                 DetailFilterPill(
                     label = "Outflows ($outflowCount)",
                     selected = selectedType == TransactionType.EXPENSE_LOCAL,
-                    onClick = { selectedType = TransactionType.EXPENSE_LOCAL }
+                    onClick = { selectedType = TransactionType.EXPENSE_LOCAL },
                 )
             }
             item {
                 DetailFilterPill(
                     label = "Brazil ($brazilCount)",
                     selected = selectedType == TransactionType.EXPENSE_BRAZIL,
-                    onClick = { selectedType = TransactionType.EXPENSE_BRAZIL }
+                    onClick = { selectedType = TransactionType.EXPENSE_BRAZIL },
                 )
             }
         }
@@ -293,15 +294,15 @@ fun MonthDetailsScreen(
         if (bucketsToShow.isNotEmpty()) {
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(horizontal = spacing.screenHorizontal, vertical = spacing.xs),
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
             ) {
                 item {
                     BucketFilterPill(
                         label = "All Buckets",
                         dotColor = null,
                         selected = selectedBucket == null,
-                        onClick = { selectedBucket = null }
+                        onClick = { selectedBucket = null },
                     )
                 }
                 items(bucketsToShow) { bucket ->
@@ -311,7 +312,7 @@ fun MonthDetailsScreen(
                         selected = selectedBucket.equals(bucket, ignoreCase = true),
                         onClick = {
                             selectedBucket = if (selectedBucket.equals(bucket, ignoreCase = true)) null else bucket
-                        }
+                        },
                     )
                 }
             }
@@ -322,61 +323,66 @@ fun MonthDetailsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .navigationBarsPadding(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 36.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            contentPadding = PaddingValues(
+                start = spacing.screenHorizontal,
+                end = spacing.screenHorizontal,
+                top = spacing.md,
+                bottom = spacing.detailListBottomClearance,
+            ),
+            verticalArrangement = Arrangement.spacedBy(spacing.itemGap),
         ) {
             // KPI Summary Strip (PLANNED | ACTUAL | AVAILABLE + Exchange Rate Chip)
             item {
-                FinnerSectionCard(contentPadding = PaddingValues(16.dp)) {
+                FinnerSectionCard(contentPadding = PaddingValues(spacing.cardPadding)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         KpiMetricColumn(
                             label = "PLANNED",
                             amount = CurrencyConverter.formatCents(summaryPlannedEur, CurrencyCode.EUR),
-                            valueColor = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f)
+                            valueColor = colors.onSurface,
+                            modifier = Modifier.weight(1f),
                         )
                         KpiMetricColumn(
                             label = "ACTUAL",
                             amount = CurrencyConverter.formatCents(summaryActualEur, CurrencyCode.EUR),
-                            valueColor = MaterialTheme.colorScheme.onSurface,
+                            valueColor = colors.onSurface,
                             alignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                         val availColor = if (summaryAvailableEur >= 0L) {
-                            FinnerTheme.extendedColors.inflow
+                            colors.inflow
                         } else {
-                            FinnerTheme.extendedColors.outflow
+                            colors.outflow
                         }
                         KpiMetricColumn(
                             label = "AVAILABLE",
                             amount = CurrencyConverter.formatCents(summaryAvailableEur, CurrencyCode.EUR),
                             valueColor = availColor,
                             alignment = Alignment.End,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(color = FinnerTheme.extendedColors.cardBorder)
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(spacing.md))
+                    HorizontalDivider(color = colors.cardBorder)
+                    Spacer(modifier = Modifier.height(spacing.md))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = "${filteredCategories.size} ${if (filteredCategories.size == 1) "category" else "categories"}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = typography.labelMedium,
+                            color = colors.onSurfaceVariant,
                         )
                         ExchangeRateChip(
                             rate = data.eurToBrlRate,
-                            onClick = onEditExchangeRate
+                            onClick = onEditExchangeRate,
                         )
                     }
                 }
@@ -388,17 +394,17 @@ fun MonthDetailsScreen(
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(spacing.sm),
                         ) {
                             Text(
                                 text = "No categories match this filter",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.onSurface
+                                style = typography.titleSmall,
+                                color = colors.onSurface,
                             )
                             Text(
                                 text = "Try clearing a filter or create a new category for $monthFullName.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = typography.bodySmall,
+                                color = colors.onSurfaceVariant,
                             )
                         }
                     }
@@ -406,7 +412,7 @@ fun MonthDetailsScreen(
             } else {
                 items(
                     items = filteredCategories,
-                    key = { it.category.id }
+                    key = { it.category.id },
                 ) { row ->
                     DetailCategoryGroupCard(
                         row = row,
@@ -419,7 +425,7 @@ fun MonthDetailsScreen(
                         onDeleteTransaction = onDeleteTransaction,
                         onEditInstallment = onEditInstallment,
                         onDeleteInstallment = onDeleteInstallment,
-                        onToggleInstallmentPaid = onToggleInstallmentPaid
+                        onToggleInstallmentPaid = onToggleInstallmentPaid,
                     )
                 }
             }
@@ -430,24 +436,23 @@ fun MonthDetailsScreen(
                     FinnerSectionCard {
                         Text(
                             text = "Uncategorized Entries",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = typography.titleSmallBold,
+                            color = colors.onSurface,
                         )
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(spacing.md))
                         uncategorizedTransactions.forEachIndexed { idx, tx ->
                             if (idx > 0) {
                                 HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    color = FinnerTheme.extendedColors.cardBorder
+                                    modifier = Modifier.padding(vertical = spacing.sm),
+                                    color = colors.cardBorder,
                                 )
                             }
                             DetailTransactionRow(
                                 transaction = tx,
                                 eurToBrlRate = data.eurToBrlRate,
-                                badgeColor = MaterialTheme.colorScheme.secondary,
+                                badgeColor = colors.secondary,
                                 onEdit = { onEditTransaction(tx) },
-                                onDelete = { onDeleteTransaction(tx) }
+                                onDelete = { onDeleteTransaction(tx) },
                             )
                         }
                     }
@@ -459,32 +464,31 @@ fun MonthDetailsScreen(
                 val targetCategoryType = selectedType ?: TransactionType.EXPENSE_LOCAL
                 Surface(
                     onClick = { onAddCategory(targetCategoryType) },
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    border = BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder),
+                    shape = shapes.actionButton,
+                    color = colors.surfaceContainerHigh,
+                    border = BorderStroke(sizes.borderThin, colors.cardBorder),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .navigationBarsPadding()
+                        .navigationBarsPadding(),
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 14.dp),
+                            .padding(vertical = spacing.md),
                         horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
+                            tint = colors.primary,
+                            modifier = Modifier.size(sizes.iconMd),
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(spacing.compactPillVertical))
                         Text(
                             text = "New ${targetCategoryType.label} Category",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                            style = typography.labelLarge,
+                            color = colors.primary,
                         )
                     }
                 }
@@ -497,28 +501,28 @@ fun MonthDetailsScreen(
 private fun DetailFilterPill(
     label: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
     Surface(
         onClick = onClick,
-        shape = CircleShape,
-        color = if (selected) {
-            MaterialTheme.colorScheme.inverseSurface
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        },
-        border = if (selected) null else BorderStroke(1.dp, FinnerTheme.extendedColors.cardBorder)
+        shape = FinnerTheme.shapes.pill,
+        color = if (selected) colors.inverseSurface else colors.surfaceContainerHigh,
+        border = if (selected) null else BorderStroke(FinnerTheme.sizes.borderThin, colors.cardBorder),
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) {
-                MaterialTheme.colorScheme.inverseOnSurface
+            style = if (selected) {
+                FinnerTheme.typography.labelMediumBold
             } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
+                FinnerTheme.typography.labelMediumMedium
             },
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+            color = if (selected) colors.inverseOnSurface else colors.onSurfaceVariant,
+            modifier = Modifier.padding(
+                horizontal = spacing.pillHorizontal,
+                vertical = spacing.pillVertical,
+            ),
         )
     }
 }
@@ -528,47 +532,54 @@ private fun BucketFilterPill(
     label: String,
     dotColor: Color?,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val activeAccent = dotColor ?: colors.primary
+
     Surface(
         onClick = onClick,
-        shape = CircleShape,
+        shape = FinnerTheme.shapes.pill,
         color = if (selected) {
-            (dotColor ?: MaterialTheme.colorScheme.primary).copy(alpha = 0.2f)
+            activeAccent.copy(alpha = FinnerAlpha.selectedContainer)
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
+            colors.surfaceContainer
         },
         border = BorderStroke(
-            width = 1.dp,
+            width = sizes.borderThin,
             color = if (selected) {
-                (dotColor ?: MaterialTheme.colorScheme.primary).copy(alpha = 0.7f)
+                activeAccent.copy(alpha = FinnerAlpha.selectedBorder)
             } else {
-                FinnerTheme.extendedColors.cardBorder
-            }
-        )
+                colors.cardBorder
+            },
+        ),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(
+                horizontal = spacing.compactPillHorizontal,
+                vertical = spacing.compactPillVertical,
+            ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
         ) {
             if (dotColor != null) {
                 Box(
                     modifier = Modifier
-                        .size(7.dp)
-                        .clip(CircleShape)
-                        .background(dotColor)
+                        .size(sizes.statusDot)
+                        .clip(FinnerTheme.shapes.pill)
+                        .background(dotColor),
                 )
             }
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                color = if (selected) {
-                    MaterialTheme.colorScheme.onSurface
+                style = if (selected) {
+                    FinnerTheme.typography.labelSmallBold
                 } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                    FinnerTheme.typography.labelSmallMedium
+                },
+                color = if (selected) colors.onSurface else colors.onSurfaceVariant,
             )
         }
     }
@@ -580,25 +591,24 @@ private fun KpiMetricColumn(
     amount: String,
     valueColor: Color,
     modifier: Modifier = Modifier,
-    alignment: Alignment.Horizontal = Alignment.Start
+    alignment: Alignment.Horizontal = Alignment.Start,
 ) {
     Column(
         modifier = modifier,
         horizontalAlignment = alignment,
-        verticalArrangement = Arrangement.spacedBy(3.dp)
+        verticalArrangement = Arrangement.spacedBy(FinnerTheme.spacing.xs),
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = FinnerTheme.typography.labelSmall,
+            color = FinnerTheme.colors.onSurfaceVariant,
         )
         Text(
             text = amount,
-            style = FinnerNumericStyles.rowAmount,
-            fontWeight = FontWeight.Bold,
+            style = FinnerTheme.numericStyles.rowAmountBold,
             color = valueColor,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -615,8 +625,14 @@ private fun DetailCategoryGroupCard(
     onDeleteTransaction: (TransactionEntity) -> Unit,
     onEditInstallment: (ActiveInstallmentItem) -> Unit,
     onDeleteInstallment: (ActiveInstallmentItem) -> Unit,
-    onToggleInstallmentPaid: (ActiveInstallmentItem) -> Unit
+    onToggleInstallmentPaid: (ActiveInstallmentItem) -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     var menuExpanded by remember { mutableStateOf(false) }
     val category = row.category
     val isBrazil = category.type == TransactionType.EXPENSE_BRAZIL
@@ -624,9 +640,9 @@ private fun DetailCategoryGroupCard(
     val displayCurrency = if (isBrazil) CurrencyCode.BRL else CurrencyCode.EUR
     val accentColor = when {
         !category.envelopeName.isNullOrBlank() -> bucketColorFor(category.envelopeName)
-        isIncome -> FinnerTheme.extendedColors.inflow
-        isBrazil -> FinnerTheme.extendedColors.brazilAccent
-        else -> MaterialTheme.colorScheme.primary
+        isIncome -> colors.inflow
+        isBrazil -> colors.brazilAccent
+        else -> colors.primary
     }
 
     val progressFraction = if (row.previstoCents > 0L) {
@@ -635,55 +651,57 @@ private fun DetailCategoryGroupCard(
         0f
     }
     val remainingColor = when {
-        isIncome && row.realizadoCents >= row.previstoCents -> FinnerTheme.extendedColors.inflow
-        !isIncome && row.disponivelCents >= 0L -> FinnerTheme.extendedColors.inflow
-        else -> FinnerTheme.extendedColors.outflow
+        isIncome && row.realizadoCents >= row.previstoCents -> colors.inflow
+        !isIncome && row.disponivelCents >= 0L -> colors.inflow
+        else -> colors.outflow
     }
 
-    FinnerSectionCard(contentPadding = PaddingValues(16.dp)) {
+    FinnerSectionCard(contentPadding = PaddingValues(spacing.cardPadding)) {
         // Group Header Row (Clean title + bucket badge + '+' + '•••' overflow)
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                verticalArrangement = Arrangement.spacedBy(spacing.xs),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                 ) {
                     Text(
                         text = category.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = typography.titleSmallBold,
+                        color = colors.onSurface,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                     if (!category.envelopeName.isNullOrBlank()) {
                         Surface(
-                            shape = CircleShape,
-                            color = accentColor.copy(alpha = 0.16f)
+                            shape = shapes.pill,
+                            color = accentColor.copy(alpha = FinnerAlpha.tintedContainer),
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = spacing.badgeHorizontal,
+                                    vertical = spacing.badgeVertical,
+                                ),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                horizontalArrangement = Arrangement.spacedBy(spacing.xs),
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(CircleShape)
-                                        .background(accentColor)
+                                        .size(sizes.statusDot)
+                                        .clip(shapes.pill)
+                                        .background(accentColor),
                                 )
                                 Text(
                                     text = category.envelopeName,
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = typography.labelSmall,
                                     color = accentColor,
-                                    maxLines = 1
+                                    maxLines = 1,
                                 )
                             }
                         }
@@ -692,99 +710,105 @@ private fun DetailCategoryGroupCard(
 
                 Text(
                     text = "${CurrencyConverter.formatCents(row.realizadoCents, displayCurrency)} of ${CurrencyConverter.formatCents(row.previstoCents, displayCurrency)} · Left ${CurrencyConverter.formatCents(row.disponivelCents, displayCurrency)}",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = typography.bodySmall,
                     color = remainingColor,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = onQuickAdd,
-                    modifier = Modifier.size(34.dp)
+                    modifier = Modifier.size(sizes.iconButtonMd),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Add entry to ${category.name}",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        tint = colors.primary,
+                        modifier = Modifier.size(sizes.iconLg),
                     )
                 }
 
                 Box {
                     IconButton(
                         onClick = { menuExpanded = true },
-                        modifier = Modifier.size(34.dp)
+                        modifier = Modifier.size(sizes.iconButtonMd),
                     ) {
                         Icon(
                             imageVector = Icons.Default.MoreHoriz,
                             contentDescription = "Category options",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
+                            tint = colors.onSurfaceVariant,
+                            modifier = Modifier.size(sizes.iconLg),
                         )
                     }
                     DropdownMenu(
                         expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
+                        onDismissRequest = { menuExpanded = false },
                     ) {
                         DropdownMenuItem(
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(sizes.iconMd),
+                                )
+                            },
                             text = { Text("Edit category") },
                             onClick = {
                                 menuExpanded = false
                                 onEditCategory()
-                            }
+                            },
                         )
                         DropdownMenuItem(
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.DeleteOutline,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(18.dp)
+                                    tint = colors.error,
+                                    modifier = Modifier.size(sizes.iconMd),
                                 )
                             },
-                            text = { Text("Delete category", color = MaterialTheme.colorScheme.error) },
+                            text = { Text("Delete category", color = colors.error) },
                             onClick = {
                                 menuExpanded = false
                                 onDeleteCategory()
-                            }
+                            },
                         )
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(spacing.sm))
         LinearProgressIndicator(
             progress = { progressFraction },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(4.dp)
-                .clip(CircleShape),
+                .height(sizes.progressBarSm)
+                .clip(shapes.pill),
             color = accentColor,
-            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+            trackColor = colors.surfaceContainerHighest,
         )
 
         val hasItems = row.transactions.isNotEmpty() || row.installments.isNotEmpty()
         if (!hasItems) {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
             Text(
                 text = "No entries recorded this month. Tap + to add one.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
         } else {
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = FinnerTheme.extendedColors.cardBorder)
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
+            HorizontalDivider(color = colors.cardBorder)
+            Spacer(modifier = Modifier.height(spacing.compactPillVertical))
 
             row.transactions.forEachIndexed { index, tx ->
                 if (index > 0) {
                     HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        color = FinnerTheme.extendedColors.cardBorder.copy(alpha = 0.6f)
+                        modifier = Modifier.padding(vertical = spacing.xs),
+                        color = colors.cardBorder.copy(alpha = FinnerAlpha.dividerSubtle),
                     )
                 }
                 DetailTransactionRow(
@@ -792,15 +816,15 @@ private fun DetailCategoryGroupCard(
                     eurToBrlRate = eurToBrlRate,
                     badgeColor = accentColor,
                     onEdit = { onEditTransaction(tx) },
-                    onDelete = { onDeleteTransaction(tx) }
+                    onDelete = { onDeleteTransaction(tx) },
                 )
             }
 
             row.installments.forEachIndexed { index, inst ->
                 if (row.transactions.isNotEmpty() || index > 0) {
                     HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        color = FinnerTheme.extendedColors.cardBorder.copy(alpha = 0.6f)
+                        modifier = Modifier.padding(vertical = spacing.xs),
+                        color = colors.cardBorder.copy(alpha = FinnerAlpha.dividerSubtle),
                     )
                 }
                 DetailInstallmentRow(
@@ -808,7 +832,7 @@ private fun DetailCategoryGroupCard(
                     isCurrentMonth = isCurrentMonth,
                     onTogglePaid = { onToggleInstallmentPaid(inst) },
                     onEdit = { onEditInstallment(inst) },
-                    onDelete = { onDeleteInstallment(inst) }
+                    onDelete = { onDeleteInstallment(inst) },
                 )
             }
         }
@@ -821,8 +845,14 @@ private fun DetailTransactionRow(
     eurToBrlRate: Double,
     badgeColor: Color,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     var menuExpanded by remember { mutableStateOf(false) }
     val isIncome = transaction.type == TransactionType.INCOME
     val isBrazil = transaction.type == TransactionType.EXPENSE_BRAZIL
@@ -832,11 +862,7 @@ private fun DetailTransactionRow(
         TransactionType.EXPENSE_LOCAL -> Icons.Default.ArrowUpward
     }
     val amountPrefix = if (isIncome) "+ " else "- "
-    val amountColor = if (isIncome) {
-        FinnerTheme.extendedColors.inflow
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
+    val amountColor = if (isIncome) colors.inflow else colors.onSurface
     val brlEquivalentCents = if (isBrazil && transaction.currency == CurrencyCode.EUR) {
         CurrencyConverter.eurCentsToBrlCents(transaction.amountCents, eurToBrlRate)
     } else {
@@ -846,66 +872,64 @@ private fun DetailTransactionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(shapes.rowItem)
             .clickable(onClick = onEdit)
-            .padding(vertical = 8.dp),
+            .padding(vertical = spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
         // Circular Revolut-style icon badge
         Box(
             modifier = Modifier
-                .size(38.dp)
-                .clip(CircleShape)
-                .background(badgeColor.copy(alpha = 0.16f)),
-            contentAlignment = Alignment.Center
+                .size(sizes.iconBadgeMd)
+                .clip(shapes.pill)
+                .background(badgeColor.copy(alpha = FinnerAlpha.tintedContainer)),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = badgeColor,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(sizes.iconMd),
             )
         }
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(spacing.xxs),
         ) {
             Text(
                 text = transaction.description,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = typography.bodyMediumSemiBold,
+                color = colors.onSurface,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = "${transaction.date} · ${transaction.userDisplayName.ifBlank { "Shared" }}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
 
         Column(
             horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(1.dp)
+            verticalArrangement = Arrangement.spacedBy(spacing.xxs),
         ) {
             Text(
                 text = amountPrefix + CurrencyConverter.formatCents(transaction.amountCents, transaction.currency),
-                style = FinnerNumericStyles.rowAmount,
-                fontWeight = FontWeight.Bold,
+                style = FinnerTheme.numericStyles.rowAmountBold,
                 color = amountColor,
-                maxLines = 1
+                maxLines = 1,
             )
             if (brlEquivalentCents != null) {
                 Text(
                     text = "≈ ${CurrencyConverter.formatCents(brlEquivalentCents, CurrencyCode.BRL)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
+                    style = FinnerTheme.numericStyles.metaAmount,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
                 )
             }
         }
@@ -913,41 +937,47 @@ private fun DetailTransactionRow(
         Box {
             IconButton(
                 onClick = { menuExpanded = true },
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(sizes.iconButtonSm),
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreHoriz,
                     contentDescription = "Entry actions",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(sizes.iconMd),
                 )
             }
             DropdownMenu(
                 expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false }
+                onDismissRequest = { menuExpanded = false },
             ) {
                 DropdownMenuItem(
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(sizes.iconMd),
+                        )
+                    },
                     text = { Text("Edit entry") },
                     onClick = {
                         menuExpanded = false
                         onEdit()
-                    }
+                    },
                 )
                 DropdownMenuItem(
                     leadingIcon = {
                         Icon(
                             Icons.Default.DeleteOutline,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(18.dp)
+                            tint = colors.error,
+                            modifier = Modifier.size(sizes.iconMd),
                         )
                     },
-                    text = { Text("Delete entry", color = MaterialTheme.colorScheme.error) },
+                    text = { Text("Delete entry", color = colors.error) },
                     onClick = {
                         menuExpanded = false
                         onDelete()
-                    }
+                    },
                 )
             }
         }
@@ -960,85 +990,88 @@ private fun DetailInstallmentRow(
     isCurrentMonth: Boolean,
     onTogglePaid: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     var menuExpanded by remember { mutableStateOf(false) }
     val installmentBadge = item.projection.badgeText
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(shapes.rowItem)
             .clickable(onClick = onEdit)
-            .padding(vertical = 8.dp),
+            .padding(vertical = spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
         IconButton(
             onClick = onTogglePaid,
             enabled = isCurrentMonth || item.isPaid,
-            modifier = Modifier.size(34.dp)
+            modifier = Modifier.size(sizes.iconButtonMd),
         ) {
             Icon(
                 imageVector = if (item.isPaid) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                 contentDescription = if (item.isPaid) "Paid" else "Mark paid",
-                tint = if (item.isPaid) {
-                    FinnerTheme.extendedColors.inflow
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                modifier = Modifier.size(22.dp)
+                tint = if (item.isPaid) colors.inflow else colors.onSurfaceVariant,
+                modifier = Modifier.size(sizes.iconXl),
             )
         }
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(spacing.xxs),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
             ) {
                 Text(
                     text = item.projection.contract.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = typography.bodyMediumSemiBold,
+                    color = colors.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
+                    modifier = Modifier.weight(1f, fill = false),
                 )
                 Surface(
-                    shape = CircleShape,
-                    color = FinnerTheme.extendedColors.brazilContainer
+                    shape = shapes.pill,
+                    color = colors.brazilContainer,
                 ) {
                     Text(
                         text = installmentBadge,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = FinnerTheme.extendedColors.brazilAccent,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        style = typography.labelSmall,
+                        color = colors.brazilAccent,
+                        modifier = Modifier.padding(
+                            horizontal = spacing.badgeHorizontal,
+                            vertical = spacing.badgeVertical,
+                        ),
                     )
                 }
             }
             Text(
                 text = if (item.isPaid) "Paid installment" else "Scheduled installment",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
         }
 
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = "- " + CurrencyConverter.formatCents(item.amountOriginalCents, item.currency),
-                style = FinnerNumericStyles.rowAmount,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                style = FinnerTheme.numericStyles.rowAmountBold,
+                color = colors.onSurface,
             )
             if (item.currency == CurrencyCode.BRL) {
                 Text(
                     text = "≈ ${CurrencyConverter.formatCents(item.amountEurCents, CurrencyCode.EUR)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = FinnerTheme.numericStyles.metaAmount,
+                    color = colors.onSurfaceVariant,
                 )
             }
         }
@@ -1046,41 +1079,47 @@ private fun DetailInstallmentRow(
         Box {
             IconButton(
                 onClick = { menuExpanded = true },
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(sizes.iconButtonSm),
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreHoriz,
                     contentDescription = "Installment actions",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(sizes.iconMd),
                 )
             }
             DropdownMenu(
                 expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false }
+                onDismissRequest = { menuExpanded = false },
             ) {
                 DropdownMenuItem(
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(sizes.iconMd),
+                        )
+                    },
                     text = { Text("Edit contract") },
                     onClick = {
                         menuExpanded = false
                         onEdit()
-                    }
+                    },
                 )
                 DropdownMenuItem(
                     leadingIcon = {
                         Icon(
                             Icons.Default.DeleteOutline,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(18.dp)
+                            tint = colors.error,
+                            modifier = Modifier.size(sizes.iconMd),
                         )
                     },
-                    text = { Text("Delete contract", color = MaterialTheme.colorScheme.error) },
+                    text = { Text("Delete contract", color = colors.error) },
                     onClick = {
                         menuExpanded = false
                         onDelete()
-                    }
+                    },
                 )
             }
         }

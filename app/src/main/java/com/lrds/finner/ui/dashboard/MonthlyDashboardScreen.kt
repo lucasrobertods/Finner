@@ -19,9 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
@@ -29,14 +28,12 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CurrencyExchange
-import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,10 +46,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.lrds.finner.core.currency.CurrencyConverter
 import com.lrds.finner.data.local.entity.CurrencyCode
@@ -67,7 +62,7 @@ import com.lrds.finner.ui.dashboard.components.bucketColorFor
 import com.lrds.finner.ui.dashboard.components.bucketIconFor
 import com.lrds.finner.ui.dashboard.components.finnerTopAura
 import com.lrds.finner.ui.navigation.FinnerRoute
-import com.lrds.finner.ui.theme.FinnerNumericStyles
+import com.lrds.finner.ui.theme.FinnerAlpha
 import com.lrds.finner.ui.theme.FinnerTheme
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
@@ -76,12 +71,12 @@ import kotlinx.coroutines.launch
 
 val MONTH_SHORT_LABELS = listOf(
     "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
 )
 
 val MONTH_FULL_NAMES = listOf(
     "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "July", "August", "September", "October", "November", "December",
 )
 
 @Composable
@@ -99,7 +94,7 @@ fun MonthlyDashboardScreen(
     onEditInstallment: (ActiveInstallmentItem) -> Unit,
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
-    reselectEvents: Flow<NavKey> = emptyFlow()
+    reselectEvents: Flow<NavKey> = emptyFlow(),
 ) {
     val safeAvailableMonths = remember(availableMonths) {
         availableMonths.ifEmpty { (1..12).toList() }
@@ -109,7 +104,7 @@ fun MonthlyDashboardScreen(
     }
     val pagerState = rememberPagerState(
         initialPage = initialPageIndex,
-        pageCount = { safeAvailableMonths.size }
+        pageCount = { safeAvailableMonths.size },
     )
     val coroutineScope = rememberCoroutineScope()
 
@@ -135,7 +130,7 @@ fun MonthlyDashboardScreen(
         modifier = modifier
             .fillMaxSize()
             .finnerTopAura(enabled = true)
-            .testTag("screen_dashboard")
+            .testTag("screen_dashboard"),
     ) {
         topBar()
 
@@ -144,13 +139,13 @@ fun MonthlyDashboardScreen(
             selectedIndex = activePageIndex,
             onMonthSelected = { index ->
                 coroutineScope.launch { pagerState.animateScrollToPage(index) }
-            }
+            },
         )
 
         HorizontalPager(
             state = pagerState,
             key = { pageIndex -> safeAvailableMonths.getOrElse(pageIndex) { pageIndex } },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) { pageIndex ->
             val pageMonthNumber = safeAvailableMonths.getOrElse(pageIndex) { activeMonthNumber }
             val pageMonthZeroBased = (pageMonthNumber - 1).coerceIn(0, 11)
@@ -167,17 +162,17 @@ fun MonthlyDashboardScreen(
                     onAddBucket = onAddBucket,
                     onOpenDetails = { filter -> onOpenDetails(monthData.year, monthData.month, filter) },
                     onToggleInstallmentPaid = onToggleInstallmentPaid,
-                    onEditInstallment = onEditInstallment
+                    onEditInstallment = onEditInstallment,
                 )
             } else {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "Loading $pageMonthFullName...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = FinnerTheme.typography.bodyMedium,
+                        color = FinnerTheme.colors.onSurfaceVariant,
                     )
                 }
             }
@@ -200,7 +195,7 @@ private fun MonthlySummaryHomePage(
     onAddBucket: () -> Unit,
     onOpenDetails: (MonthDetailsFilter) -> Unit,
     onToggleInstallmentPaid: (ActiveInstallmentItem) -> Unit,
-    onEditInstallment: (ActiveInstallmentItem) -> Unit
+    onEditInstallment: (ActiveInstallmentItem) -> Unit,
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(reselectEvents, isActivePage) {
@@ -235,106 +230,110 @@ private fun MonthlySummaryHomePage(
     val brazilPlannedBrl = remember(brazilCategories) { brazilCategories.sumOf { it.previstoCents } }
     val brazilActualBrl = remember(brazilCategories) { brazilCategories.sumOf { it.realizadoCents } }
 
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     LazyColumn(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
             .navigationBarsPadding(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 124.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(
+            start = spacing.screenHorizontal,
+            end = spacing.screenHorizontal,
+            top = spacing.sm,
+            bottom = spacing.floatingNavBottomClearance,
+        ),
+        verticalArrangement = Arrangement.spacedBy(spacing.sectionGap),
     ) {
         // 1. Revolut Hero Balance + Circular Quick Actions
         item(key = "hero_balance") {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp, bottom = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(top = spacing.md, bottom = spacing.xs),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     text = "ACTUAL SPARE CASH · ${monthFullName.uppercase()}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.labelSmall,
+                    color = colors.onSurfaceVariant,
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(spacing.compactPillVertical))
                 Text(
                     text = CurrencyConverter.formatCents(data.faltaSobraEurCents, CurrencyCode.EUR),
-                    style = FinnerNumericStyles.heroAmount,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = FinnerTheme.numericStyles.heroAmount,
+                    color = colors.onSurface,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.sm))
 
                 // Planned Spare Cash Delta Pill
                 val plannedPositive = data.plannedSpareCashEurCents >= 0L
-                val plannedColor = if (plannedPositive) {
-                    FinnerTheme.extendedColors.inflow
-                } else {
-                    FinnerTheme.extendedColors.outflow
-                }
-                val plannedContainer = if (plannedPositive) {
-                    FinnerTheme.extendedColors.inflowContainer
-                } else {
-                    FinnerTheme.extendedColors.outflowContainer
-                }
+                val plannedColor = if (plannedPositive) colors.inflow else colors.outflow
+                val plannedContainer = if (plannedPositive) colors.inflowContainer else colors.outflowContainer
                 Surface(
-                    shape = CircleShape,
-                    color = plannedContainer
+                    shape = shapes.pill,
+                    color = plannedContainer,
                 ) {
                     Text(
                         text = "Planned ${CurrencyConverter.formatCents(data.plannedSpareCashEurCents, CurrencyCode.EUR)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        style = typography.labelMedium,
                         color = plannedColor,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+                        modifier = Modifier.padding(
+                            horizontal = spacing.compactPillHorizontal,
+                            vertical = spacing.xs,
+                        ),
                     )
                 }
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(spacing.xxl))
 
-                // Revolut Circular Quick-Action Row
+                // Revolut Circular Quick-Action Row (Zero FAB Overlap!)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CircularQuickActionButton(
                         icon = Icons.Default.Add,
                         label = "Add",
                         onClick = onAddTransaction,
-                        emphasized = true
+                        emphasized = true,
                     )
                     CircularQuickActionButton(
                         icon = Icons.Default.CurrencyExchange,
                         label = "Rate",
-                        onClick = onEditExchangeRate
+                        onClick = onEditExchangeRate,
                     )
                     CircularQuickActionButton(
                         icon = Icons.Default.AccountBalanceWallet,
                         label = "Bucket",
-                        onClick = onAddBucket
+                        onClick = onAddBucket,
                     )
                     CircularQuickActionButton(
-                        icon = Icons.Default.FormatListBulleted,
+                        icon = Icons.AutoMirrored.Filled.FormatListBulleted,
                         label = "Details",
-                        onClick = { onOpenDetails(MonthDetailsFilter()) }
+                        onClick = { onOpenDetails(MonthDetailsFilter()) },
                     )
                 }
             }
         }
 
-        // 2. Budget Envelopes Card
-        item(key = "envelopes_card") {
+        // 2. Budget Envelopes Card (Revolut "Total wealth" style — circular badges + neutral white labels)
+        item(key = "budget_envelopes") {
             RevolutEnvelopeBucketsCard(
                 envelopes = data.envelopeSummaries,
                 onAddBucket = onAddBucket,
                 onBucketClick = { bucketName ->
                     onOpenDetails(MonthDetailsFilter(initialBucket = bucketName))
-                }
+                },
             )
         }
 
         // 3. Brazil Commitments & Installments Compact Preview
-        item(key = "brazil_commitments_card") {
+        item(key = "brazil_commitments") {
             RevolutBrazilCommitmentsPreviewCard(
                 installments = data.activeInstallments,
                 isCurrentMonth = isCurrentMonth,
@@ -342,34 +341,33 @@ private fun MonthlySummaryHomePage(
                     onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_BRAZIL))
                 },
                 onTogglePaid = onToggleInstallmentPaid,
-                onEditInstallment = onEditInstallment
+                onEditInstallment = onEditInstallment,
             )
         }
 
-        // 4. Compact Categories Summary Card
-        item(key = "categories_summary_card") {
+        // 4. Compact Categories Summary Card (3 clean drill-down rows instead of 15 expanded cards!)
+        item(key = "categories_summary") {
             FinnerSectionCard {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column {
                         Text(
                             text = "Categories Summary",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = typography.titleMediumBold,
+                            color = colors.onSurface,
                         )
                         Text(
                             text = "Planned vs Actual · Tap to view entries",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(spacing.md))
 
                 CategorySummaryRow(
                     title = "Inflows (€)",
@@ -377,13 +375,13 @@ private fun MonthlySummaryHomePage(
                     actualFormatted = CurrencyConverter.formatCents(incomeActualEur, CurrencyCode.EUR),
                     plannedFormatted = CurrencyConverter.formatCents(incomePlannedEur, CurrencyCode.EUR),
                     icon = Icons.Default.ArrowDownward,
-                    accentColor = FinnerTheme.extendedColors.inflow,
-                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.INCOME)) }
+                    accentColor = colors.inflow,
+                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.INCOME)) },
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 10.dp),
-                    color = FinnerTheme.extendedColors.cardBorder
+                    modifier = Modifier.padding(vertical = spacing.sm),
+                    color = colors.cardBorder,
                 )
 
                 CategorySummaryRow(
@@ -392,13 +390,13 @@ private fun MonthlySummaryHomePage(
                     actualFormatted = CurrencyConverter.formatCents(localActualEur, CurrencyCode.EUR),
                     plannedFormatted = CurrencyConverter.formatCents(localPlannedEur, CurrencyCode.EUR),
                     icon = Icons.Default.ArrowUpward,
-                    accentColor = FinnerTheme.extendedColors.outflow,
-                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_LOCAL)) }
+                    accentColor = colors.outflow,
+                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_LOCAL)) },
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 10.dp),
-                    color = FinnerTheme.extendedColors.cardBorder
+                    modifier = Modifier.padding(vertical = spacing.sm),
+                    color = colors.cardBorder,
                 )
 
                 CategorySummaryRow(
@@ -407,8 +405,8 @@ private fun MonthlySummaryHomePage(
                     actualFormatted = CurrencyConverter.formatCents(brazilActualBrl, CurrencyCode.BRL),
                     plannedFormatted = CurrencyConverter.formatCents(brazilPlannedBrl, CurrencyCode.BRL),
                     icon = Icons.Default.Public,
-                    accentColor = FinnerTheme.extendedColors.brazilAccent,
-                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_BRAZIL)) }
+                    accentColor = colors.brazilAccent,
+                    onClick = { onOpenDetails(MonthDetailsFilter(initialType = TransactionType.EXPENSE_BRAZIL)) },
                 )
             }
         }
@@ -419,96 +417,99 @@ private fun MonthlySummaryHomePage(
 private fun RevolutEnvelopeBucketsCard(
     envelopes: List<EnvelopeSummary>,
     onAddBucket: () -> Unit,
-    onBucketClick: (String) -> Unit
+    onBucketClick: (String) -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     FinnerSectionCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
                 Text(
                     text = "Budget Envelopes",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = typography.titleMediumBold,
+                    color = colors.onSurface,
                 )
                 Text(
                     text = "Actual vs Planned · Tap to inspect",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.bodySmall,
+                    color = colors.onSurfaceVariant,
                 )
             }
             Text(
                 text = "+ New",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
+                style = typography.labelLarge,
+                color = colors.primary,
                 modifier = Modifier
-                    .clip(CircleShape)
+                    .clip(shapes.pill)
                     .clickable(onClick = onAddBucket)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .padding(horizontal = spacing.sm, vertical = spacing.xs),
             )
         }
 
         if (envelopes.isEmpty()) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
             Text(
                 text = "No budget envelopes configured yet.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
         } else {
-            Spacer(modifier = Modifier.height(14.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Spacer(modifier = Modifier.height(spacing.md))
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.md)) {
                 envelopes.forEach { envelope ->
                     val badgeColor = bucketColorFor(envelope.bucketName)
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(shapes.rowItem)
                             .clickable { onBucketClick(envelope.bucketName) }
-                            .padding(vertical = 2.dp),
-                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                            .padding(vertical = spacing.xxs),
+                        verticalArrangement = Arrangement.spacedBy(spacing.sm),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.md),
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(badgeColor.copy(alpha = 0.18f)),
-                                contentAlignment = Alignment.Center
+                                    .size(sizes.iconBadgeSm)
+                                    .clip(shapes.pill)
+                                    .background(badgeColor.copy(alpha = FinnerAlpha.envelopeBadgeContainer)),
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     imageVector = bucketIconFor(envelope.bucketName),
                                     contentDescription = null,
                                     tint = badgeColor,
-                                    modifier = Modifier.size(17.dp)
+                                    modifier = Modifier.size(sizes.iconMd),
                                 )
                             }
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
                                 ) {
                                     Text(
                                         text = envelope.bucketName,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        style = typography.bodyMediumSemiBold,
+                                        color = colors.onSurface,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                     Text(
                                         text = envelope.formattedPercentage,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        style = typography.labelSmall,
+                                        color = colors.onSurfaceVariant,
                                     )
                                 }
                             }
@@ -516,18 +517,17 @@ private fun RevolutEnvelopeBucketsCard(
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
                                     text = CurrencyConverter.formatCents(envelope.actualEurCents, CurrencyCode.EUR),
-                                    style = FinnerNumericStyles.rowAmount,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    style = FinnerTheme.numericStyles.rowAmountBold,
+                                    color = colors.onSurface,
                                 )
                                 Text(
                                     text = "of ${CurrencyConverter.formatCents(envelope.plannedEurCents, CurrencyCode.EUR)}",
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = FinnerTheme.numericStyles.metaAmount,
                                     color = if (envelope.plannedEurCents < 0L) {
-                                        FinnerTheme.extendedColors.outflow
+                                        colors.outflow
                                     } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    }
+                                        colors.onSurfaceVariant
+                                    },
                                 )
                             }
                         }
@@ -536,10 +536,10 @@ private fun RevolutEnvelopeBucketsCard(
                             progress = { envelope.usageFraction },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(4.dp)
-                                .clip(CircleShape),
+                                .height(sizes.progressBarSm)
+                                .clip(shapes.pill),
                             color = badgeColor,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            trackColor = colors.surfaceContainerHighest,
                         )
                     }
                 }
@@ -554,34 +554,42 @@ private fun RevolutBrazilCommitmentsPreviewCard(
     isCurrentMonth: Boolean,
     onSeeAll: () -> Unit,
     onTogglePaid: (ActiveInstallmentItem) -> Unit,
-    onEditInstallment: (ActiveInstallmentItem) -> Unit
+    onEditInstallment: (ActiveInstallmentItem) -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     FinnerSectionCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
             ) {
                 Text(
                     text = "Brazil Commitments",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = typography.titleMediumBold,
+                    color = colors.onSurface,
                 )
                 if (installments.isNotEmpty()) {
                     Surface(
-                        shape = CircleShape,
-                        color = FinnerTheme.extendedColors.inflowContainer
+                        shape = shapes.pill,
+                        color = colors.inflowContainer,
                     ) {
                         Text(
                             text = "${installments.size} Active",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = FinnerTheme.extendedColors.inflow,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            style = typography.labelSmall,
+                            color = colors.inflow,
+                            modifier = Modifier.padding(
+                                horizontal = spacing.badgeHorizontal,
+                                vertical = spacing.xs,
+                            ),
                         )
                     }
                 }
@@ -589,113 +597,110 @@ private fun RevolutBrazilCommitmentsPreviewCard(
 
             Row(
                 modifier = Modifier
-                    .clip(CircleShape)
+                    .clip(shapes.pill)
                     .clickable(onClick = onSeeAll)
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = spacing.xs, vertical = spacing.xxs),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "See all",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.labelMedium,
+                    color = colors.onSurfaceVariant,
                 )
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(16.dp)
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(sizes.iconSm),
                 )
             }
         }
 
         if (installments.isEmpty()) {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
             Text(
                 text = "No active installment contracts scheduled for this month.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
         } else {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.md))
             installments.take(3).forEachIndexed { idx, item ->
                 if (idx > 0) {
                     HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = FinnerTheme.extendedColors.cardBorder
+                        modifier = Modifier.padding(vertical = spacing.sm),
+                        color = colors.cardBorder,
                     )
                 }
                 val badge = item.projection.badgeText
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(shapes.rowItem)
                         .clickable { onEditInstallment(item) }
-                        .padding(vertical = 2.dp),
+                        .padding(vertical = spacing.xxs),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md),
                 ) {
                     IconButton(
                         onClick = { onTogglePaid(item) },
                         enabled = isCurrentMonth || item.isPaid,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(sizes.iconButtonMd),
                     ) {
                         Icon(
                             imageVector = if (item.isPaid) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                             contentDescription = if (item.isPaid) "Paid" else "Mark paid",
-                            tint = if (item.isPaid) {
-                                FinnerTheme.extendedColors.inflow
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                            modifier = Modifier.size(21.dp)
+                            tint = if (item.isPaid) colors.inflow else colors.onSurfaceVariant,
+                            modifier = Modifier.size(sizes.iconXl),
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.compactPillVertical),
                         ) {
                             Text(
                                 text = item.projection.contract.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                style = typography.bodyMediumSemiBold,
+                                color = colors.onSurface,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false)
+                                modifier = Modifier.weight(1f, fill = false),
                             )
                             Surface(
-                                shape = CircleShape,
-                                color = FinnerTheme.extendedColors.brazilContainer
+                                shape = shapes.pill,
+                                color = colors.brazilContainer,
                             ) {
                                 Text(
                                     text = badge,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = FinnerTheme.extendedColors.brazilAccent,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    style = typography.labelSmall,
+                                    color = colors.brazilAccent,
+                                    modifier = Modifier.padding(
+                                        horizontal = spacing.badgeHorizontal,
+                                        vertical = spacing.badgeVertical,
+                                    ),
                                 )
                             }
                         }
                         Text(
                             text = item.categoryName.ifBlank { "Installment" },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = CurrencyConverter.formatCents(item.amountOriginalCents, item.currency),
-                            style = FinnerNumericStyles.rowAmount,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = FinnerTheme.numericStyles.rowAmountBold,
+                            color = colors.onSurface,
                         )
                         if (item.currency == CurrencyCode.BRL) {
                             Text(
                                 text = "≈ ${CurrencyConverter.formatCents(item.amountEurCents, CurrencyCode.EUR)}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = FinnerTheme.numericStyles.metaAmount,
+                                color = colors.onSurfaceVariant,
                             )
                         }
                     }
@@ -713,65 +718,69 @@ private fun CategorySummaryRow(
     plannedFormatted: String,
     icon: ImageVector,
     accentColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
+    val colors = FinnerTheme.colors
+    val spacing = FinnerTheme.spacing
+    val sizes = FinnerTheme.sizes
+    val shapes = FinnerTheme.shapes
+    val typography = FinnerTheme.typography
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(shapes.rowItem)
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(vertical = spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(accentColor.copy(alpha = 0.16f)),
-            contentAlignment = Alignment.Center
+                .size(sizes.iconBadgeSm)
+                .clip(shapes.pill)
+                .background(accentColor.copy(alpha = FinnerAlpha.tintedContainer)),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = accentColor,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(sizes.iconMd),
             )
         }
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                style = typography.bodyMediumSemiBold,
+                color = colors.onSurface,
             )
             Text(
                 text = "$count ${if (count == 1) "category" else "categories"}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
         }
 
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = actualFormatted,
-                style = FinnerNumericStyles.rowAmount,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                style = FinnerTheme.numericStyles.rowAmountBold,
+                color = colors.onSurface,
             )
             Text(
                 text = "of $plannedFormatted",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = FinnerTheme.numericStyles.metaAmount,
+                color = colors.onSurfaceVariant,
             )
         }
 
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = "Open $title",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            tint = colors.onSurfaceVariant,
+            modifier = Modifier.size(sizes.iconLg),
         )
     }
 }
@@ -804,17 +813,17 @@ private fun MonthlyDashboardScreenPreview() {
                 spentOfIncomePercentage = 40.0,
                 plannedEurCents = 2_000_00L,
                 actualEurCents = 1_650_00L,
-                totalIncomeEurCents = 5_000_00L
+                totalIncomeEurCents = 5_000_00L,
             ),
             EnvelopeSummary(
                 bucketName = "Reserve",
                 spentOfIncomePercentage = 20.0,
                 plannedEurCents = 1_000_00L,
                 actualEurCents = 750_00L,
-                totalIncomeEurCents = 5_000_00L
-            )
+                totalIncomeEurCents = 5_000_00L,
+            ),
         ),
-        transactions = emptyList()
+        transactions = emptyList(),
     )
     FinnerTheme {
         MonthlyDashboardScreen(
@@ -828,7 +837,7 @@ private fun MonthlyDashboardScreenPreview() {
             onAddBucket = {},
             onOpenDetails = { _, _, _ -> },
             onToggleInstallmentPaid = {},
-            onEditInstallment = {}
+            onEditInstallment = {},
         )
     }
 }

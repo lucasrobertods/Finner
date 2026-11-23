@@ -3,118 +3,113 @@ package com.lrds.finner.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.platform.LocalContext
-
-private val DarkColorScheme = darkColorScheme(
-    primary = StitchMintDark,
-    onPrimary = StitchOnMintDark,
-    primaryContainer = StitchMintContainerDark,
-    onPrimaryContainer = StitchOnMintContainerDark,
-    secondary = StitchSlateSecondaryDark,
-    onSecondary = StitchOnSlateSecondaryDark,
-    secondaryContainer = StitchSlateSecondaryContainerDark,
-    onSecondaryContainer = StitchOnSlateSecondaryContainerDark,
-    tertiary = StitchAmberTertiaryDark,
-    onTertiary = StitchOnAmberTertiaryDark,
-    tertiaryContainer = StitchAmberTertiaryContainerDark,
-    onTertiaryContainer = StitchOnAmberTertiaryContainerDark,
-    error = StitchCoralErrorDark,
-    onError = StitchOnCoralErrorDark,
-    errorContainer = StitchCoralErrorContainerDark,
-    onErrorContainer = StitchOnCoralErrorContainerDark,
-    background = ObsidianBackgroundDark,
-    onBackground = ObsidianOnBackgroundDark,
-    surface = ObsidianSurfaceDark,
-    onSurface = ObsidianOnSurfaceDark,
-    surfaceVariant = ObsidianSurfaceVariantDark,
-    onSurfaceVariant = ObsidianOnSurfaceVariantDark,
-    surfaceDim = ObsidianSurfaceDimDark,
-    surfaceBright = ObsidianSurfaceBrightDark,
-    surfaceContainerLowest = ObsidianSurfaceContainerLowestDark,
-    surfaceContainerLow = ObsidianSurfaceContainerLowDark,
-    surfaceContainer = ObsidianSurfaceContainerDark,
-    surfaceContainerHigh = ObsidianSurfaceContainerHighDark,
-    surfaceContainerHighest = ObsidianSurfaceContainerHighestDark,
-    outline = ObsidianOutlineDark,
-    outlineVariant = ObsidianOutlineVariantDark,
-    inverseSurface = ObsidianInverseSurfaceDark,
-    inverseOnSurface = ObsidianInverseOnSurfaceDark,
-    inversePrimary = ObsidianInversePrimaryDark,
-    scrim = ObsidianScrimDark,
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = StitchMintLight,
-    onPrimary = StitchOnMintLight,
-    primaryContainer = StitchMintContainerLight,
-    onPrimaryContainer = StitchOnMintContainerLight,
-    secondary = StitchSlateSecondaryLight,
-    onSecondary = StitchOnSlateSecondaryLight,
-    secondaryContainer = StitchSlateSecondaryContainerLight,
-    onSecondaryContainer = StitchOnSlateSecondaryContainerLight,
-    tertiary = StitchAmberTertiaryLight,
-    onTertiary = StitchOnAmberTertiaryLight,
-    tertiaryContainer = StitchAmberTertiaryContainerLight,
-    onTertiaryContainer = StitchOnAmberTertiaryContainerLight,
-    error = StitchCoralErrorLight,
-    onError = StitchOnCoralErrorLight,
-    errorContainer = StitchCoralErrorContainerLight,
-    onErrorContainer = StitchOnCoralErrorContainerLight,
-    background = PaperBackgroundLight,
-    onBackground = PaperOnBackgroundLight,
-    surface = PaperSurfaceLight,
-    onSurface = PaperOnSurfaceLight,
-    surfaceVariant = PaperSurfaceVariantLight,
-    onSurfaceVariant = PaperOnSurfaceVariantLight,
-    surfaceDim = PaperSurfaceDimLight,
-    surfaceBright = PaperSurfaceBrightLight,
-    surfaceContainerLowest = PaperSurfaceContainerLowestLight,
-    surfaceContainerLow = PaperSurfaceContainerLowLight,
-    surfaceContainer = PaperSurfaceContainerLight,
-    surfaceContainerHigh = PaperSurfaceContainerHighLight,
-    surfaceContainerHighest = PaperSurfaceContainerHighestLight,
-    outline = PaperOutlineLight,
-    outlineVariant = PaperOutlineVariantLight,
-    inverseSurface = PaperInverseSurfaceLight,
-    inverseOnSurface = PaperInverseOnSurfaceLight,
-    inversePrimary = PaperInversePrimaryDark,
-    scrim = PaperScrimLight,
-)
 
 @Composable
 fun FinnerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
+    spacing: FinnerSpacing = DefaultFinnerSpacing,
+    sizes: FinnerSizes = DefaultFinnerSizes,
+    radius: FinnerRadius = DefaultFinnerRadius,
+    elevation: FinnerElevation = DefaultFinnerElevation,
+    typography: FinnerTypography = DefaultFinnerTypography,
+    numericStyles: FinnerNumericStyles = DefaultFinnerNumericStyles,
+    content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val baseColors = if (darkTheme) DarkFinnerColors else LightFinnerColors
+    val resolvedColors = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val context = LocalContext.current
+        val dynamicScheme = if (darkTheme) {
+            dynamicDarkColorScheme(context)
+        } else {
+            dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        baseColors.mergeDynamicScheme(dynamicScheme)
+    } else {
+        baseColors
+    }
+    val shapes = if (radius == DefaultFinnerRadius) {
+        DefaultFinnerShapes
+    } else {
+        FinnerShapeTokens.fromRadius(radius)
     }
 
-    val extendedColors = if (darkTheme) DarkFinnerExtendedColors else LightFinnerExtendedColors
-
-    CompositionLocalProvider(LocalFinnerExtendedColors provides extendedColors) {
+    CompositionLocalProvider(
+        LocalFinnerColors provides resolvedColors,
+        LocalFinnerSpacing provides spacing,
+        LocalFinnerSizes provides sizes,
+        LocalFinnerRadius provides radius,
+        LocalFinnerShapes provides shapes,
+        LocalFinnerElevation provides elevation,
+        LocalFinnerTypography provides typography,
+        LocalFinnerNumericStyles provides numericStyles,
+    ) {
         MaterialTheme(
-            colorScheme = colorScheme,
-            typography = Typography,
-            shapes = FinnerShapes,
-            content = content
+            colorScheme = resolvedColors.toMaterialColorScheme(),
+            typography = typography.toMaterialTypography(),
+            shapes = shapes.toMaterialShapes(),
+            content = content,
         )
     }
 }
 
+/**
+ * Unified access point for all Finner Design System tokens.
+ *
+ * Usage:
+ * - `FinnerTheme.colors` (semantic surface, accent, status, chrome & bucket tokens)
+ * - `FinnerTheme.spacing` (4dp-grid spacing scale & layout spacing tokens)
+ * - `FinnerTheme.sizes` (icon sizes, button heights, touch targets, pill dimensions, borders)
+ * - `FinnerTheme.radius` (raw corner radius tokens)
+ * - `FinnerTheme.shapes` (pre-built `RoundedCornerShape` tokens derived from `radius`)
+ * - `FinnerTheme.elevation` (surface & floating dock elevation tokens)
+ * - `FinnerTheme.typography` (Plus Jakarta Sans text hierarchy with tabular figures)
+ * - `FinnerTheme.numericStyles` (financial amount & callout styles with `tnum, lnum`)
+ */
 object FinnerTheme {
-    val extendedColors: FinnerExtendedColors
-        @Composable get() = LocalFinnerExtendedColors.current
+    val colors: FinnerColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFinnerColors.current
+
+    val spacing: FinnerSpacing
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFinnerSpacing.current
+
+    val sizes: FinnerSizes
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFinnerSizes.current
+
+    val radius: FinnerRadius
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFinnerRadius.current
+
+    val shapes: FinnerShapeTokens
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFinnerShapes.current
+
+    val elevation: FinnerElevation
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFinnerElevation.current
+
+    val typography: FinnerTypography
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFinnerTypography.current
+
+    val numericStyles: FinnerNumericStyles
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFinnerNumericStyles.current
 }
