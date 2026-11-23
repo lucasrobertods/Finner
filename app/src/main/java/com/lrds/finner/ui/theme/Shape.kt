@@ -5,22 +5,21 @@ import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 // =============================================================================
-// Finner Shape Language:
-// Varied radii by semantic role — crisp utility chips and badges contrasted
-// against generous hero containers and soft modal bottom sheets.
+// Finner Shape Language (Stitch Revolut-Inspired):
+// - Large soft cards (22dp–24dp) paired with crisp circular pills and micro tags
 // =============================================================================
 
 val FinnerShapes = Shapes(
-    extraSmall = RoundedCornerShape(6.dp),  // Micro badges, status tags, progress indicators
-    small = RoundedCornerShape(10.dp),      // Filter chips, text fields, nested entry rows
-    medium = RoundedCornerShape(16.dp),     // Standard category & reconciliation cards
-    large = RoundedCornerShape(24.dp),      // Hero summary containers, dialogs
-    extraLarge = RoundedCornerShape(28.dp), // Modal bottom sheets, floating navigation surfaces
+    extraSmall = RoundedCornerShape(8.dp),   // Micro badges, status tags, progress bars
+    small = RoundedCornerShape(12.dp),       // Filter chips, text fields, nested entry rows
+    medium = RoundedCornerShape(18.dp),      // Standard cards & modals
+    large = RoundedCornerShape(22.dp),       // Primary dashboard section cards
+    extraLarge = RoundedCornerShape(28.dp),  // Modal bottom sheets, floating nav dock
 )
 
 object FinnerCustomShapes {
     val bottomSheet = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     val pill = RoundedCornerShape(percent = 50)
-    val ledgerRow = RoundedCornerShape(10.dp)
+    val ledgerRow = RoundedCornerShape(14.dp)
     val heroLedgerCard = RoundedCornerShape(24.dp)
 }
