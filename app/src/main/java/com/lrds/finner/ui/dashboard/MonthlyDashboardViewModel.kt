@@ -23,6 +23,7 @@ import com.lrds.finner.domain.usecase.ObserveMonthlyDashboardUseCase
 import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,18 +32,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-enum class AppSection(val title: String) {
-    MONTHLY("Months (JAN–DEC)"),
-    GOALS("Goals")
-}
-
 data class DashboardUiState(
     val selectedYear: Int = LocalDate.now().year,
     val availableYears: List<Int> = listOf(LocalDate.now().year),
     val availableMonths: List<Int> = (LocalDate.now().monthValue..12).toList(),
     val selectedMonth: Int = LocalDate.now().monthValue,
     val selectedUserFilter: String? = null,
-    val activeSection: AppSection = AppSection.MONTHLY,
     val session: HouseholdSession = HouseholdSession(
         userId = "local",
         userDisplayName = "Member 1",
@@ -61,8 +56,7 @@ private data class FilterState(
     val year: Int,
     val availableYears: List<Int>,
     val month: Int,
-    val userFilter: String?,
-    val section: AppSection
+    val userFilter: String?
 )
 
 private data class DomainBundle(
@@ -83,7 +77,6 @@ class MonthlyDashboardViewModel(
     private val selectedYear = MutableStateFlow(LocalDate.now().year)
     private val selectedMonth = MutableStateFlow(LocalDate.now().monthValue)
     private val selectedUserFilter = MutableStateFlow<String?>(null)
-    private val activeSection = MutableStateFlow(AppSection.MONTHLY)
     private val authFeedbackMessage = MutableStateFlow<String?>(null)
 
     init {
@@ -103,11 +96,15 @@ class MonthlyDashboardViewModel(
         selectedYear,
         availableYears,
         selectedMonth,
-        selectedUserFilter,
-        activeSection
-    ) { year, years, month, userFilter, section ->
-        FilterState(year, years, month, userFilter, section)
+        selectedUserFilter
+    ) { year, years, month, userFilter ->
+        FilterState(year, years, month, userFilter)
     }
+
+    fun observeMonth(year: Int, month: Int): Flow<MonthlyDashboardData> =
+        selectedUserFilter.flatMapLatest { userFilter ->
+            observeMonthlyDashboardUseCase(year, month, userFilter)
+        }
 
     private val allMonthsFlow = combine(selectedYear, selectedUserFilter) { year, userFilter ->
         year to userFilter
@@ -168,7 +165,6 @@ class MonthlyDashboardViewModel(
             availableMonths = availableMonths,
             selectedMonth = safeSelectedMonth,
             selectedUserFilter = filter.userFilter,
-            activeSection = filter.section,
             session = session,
             authFeedbackMessage = feedback,
             cloudSyncState = repository.cloudSyncState,
@@ -245,10 +241,6 @@ class MonthlyDashboardViewModel(
         selectedUserFilter.value = userId
     }
 
-    fun selectSection(section: AppSection) {
-        activeSection.value = section
-    }
-
     fun updateProfileAndWorkspace(
         displayName: String,
         householdId: String,
@@ -309,11 +301,11 @@ class MonthlyDashboardViewModel(
         authFeedbackMessage.value = null
     }
 
-    fun updateExchangeRate(month: Int, newRate: Double) {
+    fun updateExchangeRate(month: Int, newRate: Double, year: Int = selectedYear.value) {
         if (newRate <= 0.0) return
         viewModelScope.launch {
             repository.updateExchangeRate(
-                year = selectedYear.value,
+                year = year,
                 month = month,
                 eurToBrlRate = newRate,
                 userId = authManager.session.value.userId
@@ -331,19 +323,20 @@ class MonthlyDashboardViewModel(
         type: TransactionType,
         userId: String,
         userDisplayName: String,
-        applyToSubsequentMonths: Boolean = false
+        applyToSubsequentMonths: Boolean = false,
+        year: Int = selectedYear.value
     ) {
         viewModelScope.launch {
             val today = LocalDate.now()
             val safeDay = (existingTransaction?.date?.dayOfMonth ?: today.dayOfMonth).coerceAtMost(28)
-            val date = LocalDate.of(selectedYear.value, month, safeDay)
+            val date = LocalDate.of(year, month, safeDay)
             val entity = if (existingTransaction != null) {
                 existingTransaction.copy(
                     description = description,
                     amountCents = amountCents,
                     currency = currency,
                     date = date,
-                    year = selectedYear.value,
+                    year = year,
                     month = month,
                     categoryId = categoryId,
                     type = type,
@@ -381,7 +374,8 @@ class MonthlyDashboardViewModel(
         type: TransactionType,
         userId: String,
         userDisplayName: String,
-        existingContract: InstallmentContractEntity? = null
+        existingContract: InstallmentContractEntity? = null,
+        startYear: Int = selectedYear.value
     ) {
         viewModelScope.launch {
             val coercedInitial = initialInstallmentNumber.coerceAtLeast(1)
@@ -404,7 +398,7 @@ class MonthlyDashboardViewModel(
                     description = description,
                     monthlyAmountCents = monthlyAmountCents,
                     currency = currency,
-                    startYear = selectedYear.value,
+                    startYear = startYear,
                     startMonth = startMonth,
                     initialInstallmentNumber = coercedInitial,
                     totalInstallments = coercedTotal,
@@ -463,7 +457,8 @@ class MonthlyDashboardViewModel(
         plannedAmountCents: Long,
         plannedPercentage: Double? = null,
         currency: CurrencyCode,
-        applyToSubsequentMonths: Boolean
+        applyToSubsequentMonths: Boolean,
+        year: Int = selectedYear.value
     ) {
         viewModelScope.launch {
             val resolvedEnvelope = if (type == TransactionType.INCOME) null else (envelopeName ?: "Bills")
@@ -473,7 +468,7 @@ class MonthlyDashboardViewModel(
             }
             val entity = if (existingCategory != null) {
                 existingCategory.copy(
-                    year = selectedYear.value,
+                    year = year,
                     month = month,
                     name = name,
                     type = type,
@@ -487,7 +482,7 @@ class MonthlyDashboardViewModel(
                 CategoryEntity(
                     id = newId,
                     seriesId = newId,
-                    year = selectedYear.value,
+                    year = year,
                     month = month,
                     name = name,
                     type = type,
